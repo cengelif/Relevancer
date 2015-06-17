@@ -1,2 +1,2 @@
-# Flood
-eliminating tweets that are relevant or irrelevant 
+# Relevancer
+This project is created and developed by Ali HURRIYETOGLU and Elif TURKAY.

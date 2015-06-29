@@ -1,3 +1,7 @@
+import configparser
+import sys
+import pymongo
+import logging
 import argparse
 import json
 import datetime
@@ -11,11 +15,47 @@ import numpy as np
 import scipy as sp
 import regex
 
+from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn import metrics
+
+
+#Logging
+logging.basicConfig(filename='/home/elif/relevancer/myapp.log',
+                            #filemode='a',
+                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                            datefmt='%d-%m-%Y, %H:%M',
+                            level=logging.INFO)
+
+logging.info("Script started")
+
+
+#Config Parser
+config = configparser.ConfigParser()
+config.read('/home/elif/relevancer/myconfig.ini')
+
+#MongoLab OAuth;
+client_host = config.get('mongodb', 'client_host')
+client_port = int(config.get('mongodb', 'client_port'))
+db_name = config.get('mongodb', 'db_name')
+user_name = config.get('mongodb', 'user_name')
+passwd = config.get('mongodb', 'passwd')
+
+#Connect to database
+try:
+	connection = MongoClient(client_host, client_port)
+	rlvdb = connection[mydb]  #Database
+	rlvdb.authenticate(user_name, passwd)
+	rlvcl = rlvdb.coll123 #Collection
+	logging.info('Connected to Database')
+except Exception:
+	logging.error("Database Connection Failed!")
+	sys.exit("Database connection failed!")
+	pass
+ 
 
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
 
@@ -31,7 +71,7 @@ parser.add_argument('-l', '--lang', type=str, default='en', help='language of th
 
 args = parser.parse_args()
 
-min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not bigger than that.
+min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.7 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 
@@ -53,7 +93,7 @@ class MLStripper(HTMLParser):
 class Twtokenizer():
 	
 	def __init__(self):
-		self.toReplaceDict = OrderedDict({'!!*':' ! ','\?':' ? ', '\"':' " ',"“":" “ ","”":" ” ", "\'\'*":"'","\' ":" ' "
+		'''self.toReplaceDict = OrderedDict({'!!*':' ! ','\?':' ? ', '\"':' " ',"“":" “ ","”":" ” ", "\'\'*":"'","\' ":" ' "
 	," \'":" ' ","’ ":" ’ ",'&amp;':'&','&gt;':'>','&lt;':'<', '~~*':' ~ ',"¿¿*":" ¿ ",'\.\.\.':' ... ','\.\.':' .. '
 	,'…':' … ',"\(\(*":'(',"\)\)*":')',"\+\+*":'+',"\*\**":'*',"\|\|*":"|","\$\$*":"$","%%*":"%",">>*":">","<<*":"<","--*":"-" 
 	,"\/\/\/*":"//","(:d)(:d)*":":d",":ddd*":" :d ",":ppp*":" :p ",";;;*":";",":\* ":" :* ",":\(":" :( ","\(:":" (: ",":\)":" :) "
@@ -65,9 +105,9 @@ class Twtokenizer():
 	,"😨😨*":" :| ","😏😏*":" :| " ,"😔😔*":" :| ","😒😒*":" :| ","😫😫*":" :( ","😪😪*":" :'( "
 	,"😰😰*":" :'( " ,"😍😍*":" <3 ","😘😘*":" <3 ","<33*":" <3 ","<3(<3)*":" <3 ","😳😳*":" 😳 ", "😻😻*":" 😻 ", "\n\n*":" \n ", "♪♪*":" ♪ "
 	,"💧💧*":" 💧 ", """\xa0""":" ", "\n":" . ","【【*":" 【 ","】】*":" 】 ","「「*":" 「 ","」」*":" 」 ","❤️❤️*":" <3 ","🎶🎶*":" 🎶 "
-	,"😌😌*":" :) ","💖💖*":" <3 ","😐😐*":" :| ","\.: ":" .: "})
+	,"😌😌*":" :) ","💖💖*":" <3 ","😐😐*":" :| ","\.: ":" .: "})'''
 	
-	# '\. ': ' . ' --> deleted from toReplaceDict to be able to process the abbreviations.
+	# '\. ': ' . ' --> deleted from toReplaceDict to be able to process the abbreviations. 
 	
 		self.abbreviations = ['i.v.m.','a.s.','knp.']
 		print('init:',self.abbreviations)
@@ -123,7 +163,7 @@ class Twtokenizer():
 		
 		tokdf[newtexcol] = tokdf[texcol].copy()
 	
-		tokdf[newtexcol] = tokdf[newtexcol].replace(self.toReplaceDict, regex=True)
+		#tokdf[newtexcol] = tokdf[newtexcol].replace(self.toReplaceDict, regex=True)
 		tokdf[newtexcol][tokdf[newtexcol].str.endswith(".")] = tokdf[tokdf[newtexcol].str.endswith(".")][newtexcol].apply(lambda tw: tw[:-1]+' .') 
 		tokdf[newtexcol][tokdf[newtexcol].str.endswith(".'")] = tokdf[tokdf[newtexcol].str.endswith(".'")][newtexcol].apply(lambda tw: tw[:-2]+" . '") 
 		tokdf[newtexcol][tokdf[newtexcol].str.startswith("'")] = tokdf[tokdf[newtexcol].str.startswith("'")][newtexcol].apply(lambda tw: "' "+tw[1:])
@@ -256,13 +296,20 @@ if __name__ == "__main__":
 		#freqcutoff = int(m.sqrt(len(tweetsDF))/5)
 		freqcutoff = int(m.log(len(tweetsDF))/2)
 		print("Frequency cutoff is:", freqcutoff)
-
-		word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), norm='l2', min_df=freqcutoff, lowercase=False)
+		#To use UCS-4 write in like "[\U00010000-\U0010ffff]" format and to use UCS-2 write in like "[\uD800-\uDBFF][\uDC00-\uDFFF]" format. 
+		#If you use try/except statement it can be more effective.
+		word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]")
 		text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
-		#print("feature list:",text_vectors.get_feature_names()) # get_feature_names()[source]
+		#if text_vectors is None:
+		#	print('True')
+		#else:
+		#	print('False')
+		#print("feature list:", word_vectorizer.get_feature_names()) 
+		# get_feature_names()[source]
+		#input('***************************************')
+		#time.sleep(10)
 		doc_feat_mtrx = text_vectors
 		print("\nshape of the document - feature matrix:",text_vectors.shape)
-
 		#reducer = PCA(n_components=int(text_vectors.shape[1]/5))
 		#reduced_X = reducer.fit_transform(text_vectors.toarray())
 		#print("\nshape of the document - feature matrix after PCA:", reduced_X.shape)

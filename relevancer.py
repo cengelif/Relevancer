@@ -41,20 +41,27 @@ config.read('/home/elif/relevancer/myconfig.ini')
 client_host = config.get('mongodb', 'client_host')
 client_port = int(config.get('mongodb', 'client_port'))
 db_name = config.get('mongodb', 'db_name')
-user_name = config.get('mongodb', 'user_name')
-passwd = config.get('mongodb', 'passwd')
+coll_name = config.get('mongodb', 'coll_name')
+if config.has_option('mongodb', 'user_name'):
+   user_name = config.get('mongodb', 'user_name')
+if config.has_option('mongodb', 'passwd'):
+   passwd = config.get('mongodb', 'passwd')
+
+#Mongo query
+mongo_query = {}
 
 #Connect to database
 try:
-	connection = MongoClient(client_host, client_port)
-	rlvdb = connection[mydb]  #Database
-	rlvdb.authenticate(user_name, passwd)
-	rlvcl = rlvdb.coll123 #Collection
-	logging.info('Connected to Database')
+   connection = pm.MongoClient(client_host, client_port)
+   rlvdb = connection[db_name]  #Database
+   if ('user_name' in locals()) and ('passwd' in locals()):
+      rlvdb.authenticate(user_name, passwd)
+   rlvcl = rlvdb[coll_name] #Collection
+   logging.info('Connected to Database')
 except Exception:
-	logging.error("Database Connection Failed!")
-	sys.exit("Database connection failed!")
-	pass
+   logging.error("Database Connection Failed!")
+   sys.exit("Database connection failed!")
+   pass
  
 
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
@@ -241,6 +248,63 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 
 		return ftwits
 
+
+def read_json_tweets_database(reqlang='en'):
+	ftwits = []
+	lang_cntr = Counter()
+
+	
+	for i, t in enumerate(rlvcl.find(mongo_query)):
+
+		if i == 10000: # restrict line numbers for test
+			break
+		
+      # t = json.loads(ln)
+		lang_cntr[t["lang"]] += 1
+
+		if t["lang"] == reqlang:
+			t["created_at"] = datetime.datetime.strptime(t["created_at"],"%a %b %d %H:%M:%S +0000 %Y")
+
+			#if t["created_at"].strftime("%Y-%m-%d") in flood_AnomBreakoutDaysList:
+
+			if "media" in t["entities"]:
+				for tm in t["entities"]["media"]:
+					if tm["type"] == 'photo':
+						t["entity_type"] = 'photo'
+						break
+
+			t["entity_hashtags"] = [ehs["text"] for ehs in t["entities"]["hashtags"]]
+			t["entity_mentions"] = [ems["screen_name"] for ems in t["entities"]["user_mentions"]]
+			t["entity_urls"] = [ers["display_url"] for ers in t["entities"]["urls"]]
+
+
+			try:
+				if "place" in t:
+					t["country"] = t["place"]["country"]
+			except:
+				pass
+				
+
+			if "retweeted_status" in t:
+				t["is_retweet"] = True
+			else:
+				t["is_retweet"] = False
+
+			t["device"] = strip_tags(t["source"])
+
+			t["user_id"] = t["user"]["id_str"]
+			t["user_followers"] = t["user"]["followers_count"]
+			t["user_following"] = t["user"]["friends_count"]
+
+			t2 = {k:v for k,v in t.items() if k in ["entity_type","entity_hashtags","entity_mentions","entity_urls",\
+													"country","created_at","text","in_reply_to_user_id","id_str","user_id",\
+													"user_followers","user_following", "coordinates", "is_retweet","device"]}
+			#print(i, end=',')
+			ftwits.append(t2)#.splitlines()
+	print("Number of documents per languge:",lang_cntr)
+
+	return ftwits
+
 def get_cluster_sizes(kmeans_result,doclist):
 	clust_len_cntr = Counter()
 	for l in set(kmeans_result.labels_):
@@ -252,7 +316,8 @@ if __name__ == "__main__":
 	tok_result_col = "texttokCap"
 	tok_result_lower_col = "texttok"
 
-	tweetlist = read_json_tweets_file(args.infile)
+   # tweetlist = read_json_tweets_file(args.infile, args.lang)
+	tweetlist = read_json_tweets_database(args.lang)
 	tweetsDF = pd.DataFrame(tweetlist)
 	tweetsDF.set_index("created_at", inplace=True)
 	tweetsDF.sort_index(inplace=True)

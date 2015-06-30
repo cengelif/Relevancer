@@ -1,31 +1,8 @@
-"""
-Introduction:
-- This scripts belongs to Ali Hurriyetoglu and Elif Turkay.
-- June 2015.
-
-Decisions:
-- Should we eliminate RTs: The default should be YES.
-- Numbers are used as features
-- if a clustering does not provide any candidate, change the thresholds in the next iteration!
-
-ToDo:
-- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.
-- n_clusters, for k should be assigned automatically at the beginning.
-- silhouette score can be provided with an explanation.
-- Write each group to files.
-- while writing to the file: write remaining tweets as "rest".
-- based on the identified/labeled tweets, a classifier may be able to predict label of a new cluster.
-- change token pattern of TfidfVectorizer! take one character features into account: I, a, ... (OK)
-- support configuration files
-- add create a classifier, test a classifier by classifying 10 docs and asking if they are good! option based on annotation after a while!
-- add one chars to the feature list, which are not "space, \t,\n" neither comma? how scikit-learn tokenize?
-- tokenizer should process: ‘
-- put an option to go out of the complete iteration. Currently q quits only from the current iteration.
-- How to extract features without ignoring punctuation
-"""
-
+<<<<<<< HEAD
 
 import output
+=======
+>>>>>>> origin/ron
 import configparser
 import sys
 import pymongo
@@ -69,6 +46,7 @@ config.read('/home/elif/relevancer/myconfig.ini')
 client_host = config.get('mongodb', 'client_host')
 client_port = int(config.get('mongodb', 'client_port'))
 db_name = config.get('mongodb', 'db_name')
+<<<<<<< HEAD
 user_name = config.get('mongodb', 'user_name')
 passwd = config.get('mongodb', 'passwd')
 
@@ -83,6 +61,29 @@ except Exception:
 	logging.error("Database Connection Failed!")
 	#sys.exit("Database connection failed!")
 	pass
+=======
+coll_name = config.get('mongodb', 'coll_name')
+if config.has_option('mongodb', 'user_name'):
+   user_name = config.get('mongodb', 'user_name')
+if config.has_option('mongodb', 'passwd'):
+   passwd = config.get('mongodb', 'passwd')
+
+#Mongo query
+mongo_query = {}
+
+#Connect to database
+try:
+   connection = pm.MongoClient(client_host, client_port)
+   rlvdb = connection[db_name]  #Database
+   if ('user_name' in locals()) and ('passwd' in locals()):
+      rlvdb.authenticate(user_name, passwd)
+   rlvcl = rlvdb[coll_name] #Collection
+   logging.info('Connected to Database')
+except Exception:
+   logging.error("Database Connection Failed!")
+   sys.exit("Database connection failed!")
+   pass
+>>>>>>> origin/ron
  
 
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
@@ -121,7 +122,25 @@ class MLStripper(HTMLParser):
 class Twtokenizer():
 	
 	def __init__(self):
+<<<<<<< HEAD
 		
+=======
+		'''self.toReplaceDict = OrderedDict({'!!*':' ! ','\?':' ? ', '\"':' " ',"“":" “ ","”":" ” ", "\'\'*":"'","\' ":" ' "
+	," \'":" ' ","’ ":" ’ ",'&amp;':'&','&gt;':'>','&lt;':'<', '~~*':' ~ ',"¿¿*":" ¿ ",'\.\.\.':' ... ','\.\.':' .. '
+	,'…':' … ',"\(\(*":'(',"\)\)*":')',"\+\+*":'+',"\*\**":'*',"\|\|*":"|","\$\$*":"$","%%*":"%",">>*":">","<<*":"<","--*":"-" 
+	,"\/\/\/*":"//","(:d)(:d)*":":d",":ddd*":" :d ",":ppp*":" :p ",";;;*":";",":\* ":" :* ",":\(":" :( ","\(:":" (: ",":\)":" :) "
+	,'\):':' ): ',";\)":" ;) ","\+\+":" + ",":\|":" :| ",":-\)":" :-) ",";-\)":" ;-) ",":-\(":" :-( ",":\'\(":" :'( ",":p ":" :p "
+	,";p ":" ;p ",":d ":" :d ","-_-":" -_- ",":o\)":" :o) ",":\$":" :$ ","\.@":". @",'#':' #',' \.': ' . ','	':' '
+	,'   ':' ','   ':' ','  ':' ',"😡😡*":" :( ","☺️☺️*":" :) ","😄😄*":" :d ","😃😃*":" :d ","😆😆*":" :d ","😷😷*":" :d "
+	,"😅😅*":" :d ","😋😋*":" :d ","😜😜*":" :p " ,"😝😝*":" :p ","😂😂*":" :'( ","😢😢*":" :'( ","😁😁*":" :( ","😞😞*":" :( "
+	,"😖😖*":" :( " ,"😥😥*":" :( ","😩😩*":" :( ","😊😊*":" :) ","😉😉*":" :) ","😎😎*":" :) " ,"😇😇*":" :) ","😭😭*":" :'d " 
+	,"😨😨*":" :| ","😏😏*":" :| " ,"😔😔*":" :| ","😒😒*":" :| ","😫😫*":" :( ","😪😪*":" :'( "
+	,"😰😰*":" :'( " ,"😍😍*":" <3 ","😘😘*":" <3 ","<33*":" <3 ","<3(<3)*":" <3 ","😳😳*":" 😳 ", "😻😻*":" 😻 ", "\n\n*":" \n ", "♪♪*":" ♪ "
+	,"💧💧*":" 💧 ", """\xa0""":" ", "\n":" . ","【【*":" 【 ","】】*":" 】 ","「「*":" 「 ","」」*":" 」 ","❤️❤️*":" <3 ","🎶🎶*":" 🎶 "
+	,"😌😌*":" :) ","💖💖*":" <3 ","😐😐*":" :| ","\.: ":" .: "})'''
+	
+	# '\. ': ' . ' --> deleted from toReplaceDict to be able to process the abbreviations. 
+>>>>>>> origin/ron
 	
 		self.abbreviations = ['i.v.m.','a.s.','knp.']
 		print('init:',self.abbreviations)
@@ -255,6 +274,63 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 
 		return ftwits
 
+
+def read_json_tweets_database(reqlang='en'):
+	ftwits = []
+	lang_cntr = Counter()
+
+	
+	for i, t in enumerate(rlvcl.find(mongo_query)):
+
+		if i == 10000: # restrict line numbers for test
+			break
+		
+      # t = json.loads(ln)
+		lang_cntr[t["lang"]] += 1
+
+		if t["lang"] == reqlang:
+			t["created_at"] = datetime.datetime.strptime(t["created_at"],"%a %b %d %H:%M:%S +0000 %Y")
+
+			#if t["created_at"].strftime("%Y-%m-%d") in flood_AnomBreakoutDaysList:
+
+			if "media" in t["entities"]:
+				for tm in t["entities"]["media"]:
+					if tm["type"] == 'photo':
+						t["entity_type"] = 'photo'
+						break
+
+			t["entity_hashtags"] = [ehs["text"] for ehs in t["entities"]["hashtags"]]
+			t["entity_mentions"] = [ems["screen_name"] for ems in t["entities"]["user_mentions"]]
+			t["entity_urls"] = [ers["display_url"] for ers in t["entities"]["urls"]]
+
+
+			try:
+				if "place" in t:
+					t["country"] = t["place"]["country"]
+			except:
+				pass
+				
+
+			if "retweeted_status" in t:
+				t["is_retweet"] = True
+			else:
+				t["is_retweet"] = False
+
+			t["device"] = strip_tags(t["source"])
+
+			t["user_id"] = t["user"]["id_str"]
+			t["user_followers"] = t["user"]["followers_count"]
+			t["user_following"] = t["user"]["friends_count"]
+
+			t2 = {k:v for k,v in t.items() if k in ["entity_type","entity_hashtags","entity_mentions","entity_urls",\
+													"country","created_at","text","in_reply_to_user_id","id_str","user_id",\
+													"user_followers","user_following", "coordinates", "is_retweet","device"]}
+			#print(i, end=',')
+			ftwits.append(t2)#.splitlines()
+	print("Number of documents per languge:",lang_cntr)
+
+	return ftwits
+
 def get_cluster_sizes(kmeans_result,doclist):
 	clust_len_cntr = Counter()
 	for l in set(kmeans_result.labels_):
@@ -266,7 +342,8 @@ if __name__ == "__main__":
 	tok_result_col = "texttokCap"
 	tok_result_lower_col = "texttok"
 
-	tweetlist = read_json_tweets_file(args.infile)
+   # tweetlist = read_json_tweets_file(args.infile, args.lang)
+	tweetlist = read_json_tweets_database(args.lang)
 	tweetsDF = pd.DataFrame(tweetlist)
 	tweetsDF.set_index("created_at", inplace=True)
 	tweetsDF.sort_index(inplace=True)
@@ -307,7 +384,38 @@ if __name__ == "__main__":
 	
 	while True:
 
+<<<<<<< HEAD
 		km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
+=======
+		#freqcutoff = int(m.sqrt(len(tweetsDF))/5)
+		freqcutoff = int(m.log(len(tweetsDF))/2)
+		print("Frequency cutoff is:", freqcutoff)
+		#To use UCS-4 write in like "[\U00010000-\U0010ffff]" format and to use UCS-2 write in like "[\uD800-\uDBFF][\uDC00-\uDFFF]" format. 
+		#If you use try/except statement it can be more effective.
+		word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]")
+		text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
+		#if text_vectors is None:
+		#	print('True')
+		#else:
+		#	print('False')
+		#print("feature list:", word_vectorizer.get_feature_names()) 
+		# get_feature_names()[source]
+		#input('***************************************')
+		#time.sleep(10)
+		doc_feat_mtrx = text_vectors
+		print("\nshape of the document - feature matrix:",text_vectors.shape)
+		#reducer = PCA(n_components=int(text_vectors.shape[1]/5))
+		#reduced_X = reducer.fit_transform(text_vectors.toarray())
+		#print("\nshape of the document - feature matrix after PCA:", reduced_X.shape)
+		#doc_feat_mtrx = reduced_X # assign which one to use!
+		
+		n_clust = int(m.sqrt(len(tweetsDF)))
+		n_initt = int(m.log10(len(tweetsDF)))
+		print('number of clusters:', n_clust, "number of clustering inits:", n_initt)
+
+		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=1000, n_init=n_initt) # , n_jobs=16
+		km.fit(doc_feat_mtrx)
+>>>>>>> origin/ron
 
 		print("\nThe silhouette score (between 0 and 1, the higher is the better):", metrics.silhouette_score(doc_feat_mtrx, km.labels_, metric='euclidean',sample_size=5000))
 

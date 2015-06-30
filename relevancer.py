@@ -50,17 +50,7 @@ db_name = config.get('mongodb', 'db_name')
 user_name = config.get('mongodb', 'user_name')
 passwd = config.get('mongodb', 'passwd')
 
-#Connect to database
-try:
-	connection = MongoClient(client_host, client_port)
-	rlvdb = connection[mydb]  #Database
-	rlvdb.authenticate(user_name, passwd)
-	rlvcl = rlvdb.coll123 #Collection
-	logging.info('Connected to Database')
-except Exception:
-	logging.error("Database Connection Failed!")
-	#sys.exit("Database connection failed!")
-	pass
+
 =======
 coll_name = config.get('mongodb', 'coll_name')
 if config.has_option('mongodb', 'user_name'):
@@ -125,21 +115,9 @@ class Twtokenizer():
 <<<<<<< HEAD
 		
 =======
-		'''self.toReplaceDict = OrderedDict({'!!*':' ! ','\?':' ? ', '\"':' " ',"“":" “ ","”":" ” ", "\'\'*":"'","\' ":" ' "
-	," \'":" ' ","’ ":" ’ ",'&amp;':'&','&gt;':'>','&lt;':'<', '~~*':' ~ ',"¿¿*":" ¿ ",'\.\.\.':' ... ','\.\.':' .. '
-	,'…':' … ',"\(\(*":'(',"\)\)*":')',"\+\+*":'+',"\*\**":'*',"\|\|*":"|","\$\$*":"$","%%*":"%",">>*":">","<<*":"<","--*":"-" 
-	,"\/\/\/*":"//","(:d)(:d)*":":d",":ddd*":" :d ",":ppp*":" :p ",";;;*":";",":\* ":" :* ",":\(":" :( ","\(:":" (: ",":\)":" :) "
-	,'\):':' ): ',";\)":" ;) ","\+\+":" + ",":\|":" :| ",":-\)":" :-) ",";-\)":" ;-) ",":-\(":" :-( ",":\'\(":" :'( ",":p ":" :p "
-	,";p ":" ;p ",":d ":" :d ","-_-":" -_- ",":o\)":" :o) ",":\$":" :$ ","\.@":". @",'#':' #',' \.': ' . ','	':' '
-	,'   ':' ','   ':' ','  ':' ',"😡😡*":" :( ","☺️☺️*":" :) ","😄😄*":" :d ","😃😃*":" :d ","😆😆*":" :d ","😷😷*":" :d "
-	,"😅😅*":" :d ","😋😋*":" :d ","😜😜*":" :p " ,"😝😝*":" :p ","😂😂*":" :'( ","😢😢*":" :'( ","😁😁*":" :( ","😞😞*":" :( "
-	,"😖😖*":" :( " ,"😥😥*":" :( ","😩😩*":" :( ","😊😊*":" :) ","😉😉*":" :) ","😎😎*":" :) " ,"😇😇*":" :) ","😭😭*":" :'d " 
-	,"😨😨*":" :| ","😏😏*":" :| " ,"😔😔*":" :| ","😒😒*":" :| ","😫😫*":" :( ","😪😪*":" :'( "
-	,"😰😰*":" :'( " ,"😍😍*":" <3 ","😘😘*":" <3 ","<33*":" <3 ","<3(<3)*":" <3 ","😳😳*":" 😳 ", "😻😻*":" 😻 ", "\n\n*":" \n ", "♪♪*":" ♪ "
-	,"💧💧*":" 💧 ", """\xa0""":" ", "\n":" . ","【【*":" 【 ","】】*":" 】 ","「「*":" 「 ","」」*":" 」 ","❤️❤️*":" <3 ","🎶🎶*":" 🎶 "
-	,"😌😌*":" :) ","💖💖*":" <3 ","😐😐*":" :| ","\.: ":" .: "})'''
+		
 	
-	# '\. ': ' . ' --> deleted from toReplaceDict to be able to process the abbreviations. 
+	
 >>>>>>> origin/ron
 	
 		self.abbreviations = ['i.v.m.','a.s.','knp.']
@@ -387,34 +365,7 @@ if __name__ == "__main__":
 <<<<<<< HEAD
 		km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
 =======
-		#freqcutoff = int(m.sqrt(len(tweetsDF))/5)
-		freqcutoff = int(m.log(len(tweetsDF))/2)
-		print("Frequency cutoff is:", freqcutoff)
-		#To use UCS-4 write in like "[\U00010000-\U0010ffff]" format and to use UCS-2 write in like "[\uD800-\uDBFF][\uDC00-\uDFFF]" format. 
-		#If you use try/except statement it can be more effective.
-		word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]")
-		text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
-		#if text_vectors is None:
-		#	print('True')
-		#else:
-		#	print('False')
-		#print("feature list:", word_vectorizer.get_feature_names()) 
-		# get_feature_names()[source]
-		#input('***************************************')
-		#time.sleep(10)
-		doc_feat_mtrx = text_vectors
-		print("\nshape of the document - feature matrix:",text_vectors.shape)
-		#reducer = PCA(n_components=int(text_vectors.shape[1]/5))
-		#reduced_X = reducer.fit_transform(text_vectors.toarray())
-		#print("\nshape of the document - feature matrix after PCA:", reduced_X.shape)
-		#doc_feat_mtrx = reduced_X # assign which one to use!
 		
-		n_clust = int(m.sqrt(len(tweetsDF)))
-		n_initt = int(m.log10(len(tweetsDF)))
-		print('number of clusters:', n_clust, "number of clustering inits:", n_initt)
-
-		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=1000, n_init=n_initt) # , n_jobs=16
-		km.fit(doc_feat_mtrx)
 >>>>>>> origin/ron
 
 		print("\nThe silhouette score (between 0 and 1, the higher is the better):", metrics.silhouette_score(doc_feat_mtrx, km.labels_, metric='euclidean',sample_size=5000))

@@ -1,3 +1,35 @@
+"""
+Introduction:
+- This scripts belongs to Ali Hurriyetoglu and Elif Turkay.
+- June 2015.
+
+Decisions:
+- Should we eliminate RTs: The default should be YES.
+- Numbers are used as features
+- if a clustering does not provide any candidate, change the thresholds in the next iteration!
+
+ToDo:
+- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.
+- n_clusters, for k should be assigned automatically at the beginning.
+- silhouette score can be provided with an explanation.
+- Write each group to files.
+- while writing to the file: write remaining tweets as "rest".
+- based on the identified/labeled tweets, a classifier may be able to predict label of a new cluster.
+- change token pattern of TfidfVectorizer! take one character features into account: I, a, ... (OK)
+- support configuration files
+- add create a classifier, test a classifier by classifying 10 docs and asking if they are good! option based on annotation after a while!
+- add one chars to the feature list, which are not "space, \t,\n" neither comma? how scikit-learn tokenize?
+- tokenizer should process: ‘
+- put an option to go out of the complete iteration. Currently q quits only from the current iteration.
+- How to extract features without ignoring punctuation
+"""
+
+
+import output
+import configparser
+import sys
+import pymongo
+import logging
 import argparse
 import json
 import datetime
@@ -11,11 +43,47 @@ import numpy as np
 import scipy as sp
 import regex
 
+from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn import metrics
+
+
+#Logging
+logging.basicConfig(filename='/home/elif/relevancer/myapp.log',
+                            #filemode='a',
+                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                            datefmt='%d-%m-%Y, %H:%M',
+                            level=logging.INFO)
+
+logging.info("Script started")
+
+
+#Config Parser
+config = configparser.ConfigParser()
+config.read('/home/elif/relevancer/myconfig.ini')
+
+#MongoLab OAuth;
+client_host = config.get('mongodb', 'client_host')
+client_port = int(config.get('mongodb', 'client_port'))
+db_name = config.get('mongodb', 'db_name')
+user_name = config.get('mongodb', 'user_name')
+passwd = config.get('mongodb', 'passwd')
+
+#Connect to database
+try:
+	connection = MongoClient(client_host, client_port)
+	rlvdb = connection[mydb]  #Database
+	rlvdb.authenticate(user_name, passwd)
+	rlvcl = rlvdb.coll123 #Collection
+	logging.info('Connected to Database')
+except Exception:
+	logging.error("Database Connection Failed!")
+	#sys.exit("Database connection failed!")
+	pass
+ 
 
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
 
@@ -31,7 +99,7 @@ parser.add_argument('-l', '--lang', type=str, default='en', help='language of th
 
 args = parser.parse_args()
 
-min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not bigger than that.
+min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.7 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 
@@ -53,21 +121,7 @@ class MLStripper(HTMLParser):
 class Twtokenizer():
 	
 	def __init__(self):
-		self.toReplaceDict = OrderedDict({'!!*':' ! ','\?':' ? ', '\"':' " ',"“":" “ ","”":" ” ", "\'\'*":"'","\' ":" ' "
-	," \'":" ' ","’ ":" ’ ",'&amp;':'&','&gt;':'>','&lt;':'<', '~~*':' ~ ',"¿¿*":" ¿ ",'\.\.\.':' ... ','\.\.':' .. '
-	,'…':' … ',"\(\(*":'(',"\)\)*":')',"\+\+*":'+',"\*\**":'*',"\|\|*":"|","\$\$*":"$","%%*":"%",">>*":">","<<*":"<","--*":"-" 
-	,"\/\/\/*":"//","(:d)(:d)*":":d",":ddd*":" :d ",":ppp*":" :p ",";;;*":";",":\* ":" :* ",":\(":" :( ","\(:":" (: ",":\)":" :) "
-	,'\):':' ): ',";\)":" ;) ","\+\+":" + ",":\|":" :| ",":-\)":" :-) ",";-\)":" ;-) ",":-\(":" :-( ",":\'\(":" :'( ",":p ":" :p "
-	,";p ":" ;p ",":d ":" :d ","-_-":" -_- ",":o\)":" :o) ",":\$":" :$ ","\.@":". @",'#':' #',' \.': ' . ','	':' '
-	,'   ':' ','   ':' ','  ':' ',"😡😡*":" :( ","☺️☺️*":" :) ","😄😄*":" :d ","😃😃*":" :d ","😆😆*":" :d ","😷😷*":" :d "
-	,"😅😅*":" :d ","😋😋*":" :d ","😜😜*":" :p " ,"😝😝*":" :p ","😂😂*":" :'( ","😢😢*":" :'( ","😁😁*":" :( ","😞😞*":" :( "
-	,"😖😖*":" :( " ,"😥😥*":" :( ","😩😩*":" :( ","😊😊*":" :) ","😉😉*":" :) ","😎😎*":" :) " ,"😇😇*":" :) ","😭😭*":" :'d " 
-	,"😨😨*":" :| ","😏😏*":" :| " ,"😔😔*":" :| ","😒😒*":" :| ","😫😫*":" :( ","😪😪*":" :'( "
-	,"😰😰*":" :'( " ,"😍😍*":" <3 ","😘😘*":" <3 ","<33*":" <3 ","<3(<3)*":" <3 ","😳😳*":" 😳 ", "😻😻*":" 😻 ", "\n\n*":" \n ", "♪♪*":" ♪ "
-	,"💧💧*":" 💧 ", """\xa0""":" ", "\n":" . ","【【*":" 【 ","】】*":" 】 ","「「*":" 「 ","」」*":" 」 ","❤️❤️*":" <3 ","🎶🎶*":" 🎶 "
-	,"😌😌*":" :) ","💖💖*":" <3 ","😐😐*":" :| ","\.: ":" .: "})
-	
-	# '\. ': ' . ' --> deleted from toReplaceDict to be able to process the abbreviations.
+		
 	
 		self.abbreviations = ['i.v.m.','a.s.','knp.']
 		print('init:',self.abbreviations)
@@ -123,7 +177,7 @@ class Twtokenizer():
 		
 		tokdf[newtexcol] = tokdf[texcol].copy()
 	
-		tokdf[newtexcol] = tokdf[newtexcol].replace(self.toReplaceDict, regex=True)
+		#tokdf[newtexcol] = tokdf[newtexcol].replace(self.toReplaceDict, regex=True)
 		tokdf[newtexcol][tokdf[newtexcol].str.endswith(".")] = tokdf[tokdf[newtexcol].str.endswith(".")][newtexcol].apply(lambda tw: tw[:-1]+' .') 
 		tokdf[newtexcol][tokdf[newtexcol].str.endswith(".'")] = tokdf[tokdf[newtexcol].str.endswith(".'")][newtexcol].apply(lambda tw: tw[:-2]+" . '") 
 		tokdf[newtexcol][tokdf[newtexcol].str.startswith("'")] = tokdf[tokdf[newtexcol].str.startswith("'")][newtexcol].apply(lambda tw: "' "+tw[1:])
@@ -250,30 +304,10 @@ if __name__ == "__main__":
 
 
 	identified_tweet_ids = []
-
+	
 	while True:
 
-		#freqcutoff = int(m.sqrt(len(tweetsDF))/5)
-		freqcutoff = int(m.log(len(tweetsDF))/2)
-		print("Frequency cutoff is:", freqcutoff)
-
-		word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), norm='l2', min_df=freqcutoff, lowercase=False)
-		text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
-		#print("feature list:",text_vectors.get_feature_names()) # get_feature_names()[source]
-		doc_feat_mtrx = text_vectors
-		print("\nshape of the document - feature matrix:",text_vectors.shape)
-
-		#reducer = PCA(n_components=int(text_vectors.shape[1]/5))
-		#reduced_X = reducer.fit_transform(text_vectors.toarray())
-		#print("\nshape of the document - feature matrix after PCA:", reduced_X.shape)
-		#doc_feat_mtrx = reduced_X # assign which one to use!
-		
-		n_clust = int(m.sqrt(len(tweetsDF)))
-		n_initt = int(m.log10(len(tweetsDF)))
-		print('number of clusters:', n_clust, "number of clustering inits:", n_initt)
-
-		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=1000, n_init=n_initt) # , n_jobs=16
-		km.fit(doc_feat_mtrx)
+		km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
 
 		print("\nThe silhouette score (between 0 and 1, the higher is the better):", metrics.silhouette_score(doc_feat_mtrx, km.labels_, metric='euclidean',sample_size=5000))
 
@@ -283,78 +317,42 @@ if __name__ == "__main__":
 		print("cluster candidates:", end=' ')
 
 		#local_information_groups = {'noise':[]} # contains cluster number for this iteration. It should pass the tweet ID information to the global_information_groups at end of each cycle
-		
-		candidate_cluster_count = 0
-		for cn, csize in clustersizes.most_common():#range(args.ksize):#clustersizes.most_common():
-			cn = int(cn)
-					
-			similar_indices = (km.labels_== cn).nonzero()[0]
+		for cn, c_str in output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres):
+			#for cn, csize in clustersizes.most_common():
+			#	cn = int(cn)
 			
-			similar = []
-			for i in similar_indices:
-				dist = sp.linalg.norm((km.cluster_centers_[cn] - doc_feat_mtrx[i]))
-				similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+			print(c_str)
+			available_labels_no = [str(i)+"-"+l for i,l in enumerate(sorted(list(information_groups.keys())))]
+			available_labels = [l for l in sorted(list(information_groups.keys()))] # do not move it to somewhere else, because in explorative mode, label updates should be reflected.
+			print("\n Available labels:", available_labels_no)
+
+			cluster_label = input("Enter (number of) an available or a new label (q to quit the iteration, Enter to postpone decision):")
+			if cluster_label == 'q':
+				break
+			elif cluster_label == '':
+				print("This group of tweets were skipped for this iteration!")
+				continue
+
+			elif cluster_label.isdigit() and int(cluster_label) < len(information_groups):
+				information_groups[available_labels[int(cluster_label)]] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+				print("Group assigned to the available label:", available_labels[int(cluster_label)])
+				print("Cluster number:", cn, "its label:", available_labels[int(cluster_label)])
+			elif mchoice == '3':
+				if cluster_label not in information_groups: # in order to avoid overwriting content of a label
+					information_groups[cluster_label] = []
+				information_groups[cluster_label] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+				print("Group assigned to a NEW label:", cluster_label)
+				print("Cluster number:", cn, "its label:", cluster_label)
+			#print(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+			else:
+				print("\nEnter a label or label number that is available. If you want to add new labels as you are exploring you should activate the explorative mode:3 from the previous step. Annotation of this group will be skipped.")
 				
-			similar = sorted(similar, reverse=False)
-			if (float(similar[0][:4]) < min_dist_thres) and (float(similar[-1][:4]) < max_dist_thres) and ((float(similar[0][:4])+0.5) > float(similar[-1][:4])): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
-				
-				candidate_cluster_count += 1
-				print("cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]))
-				
-				cluster_bigram_cntr = Counter()
-				for txt in tweetsDF[tok_result_col].values[similar_indices]:
-					cluster_bigram_cntr.update(regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
-					cluster_bigram_cntr.update(txt.split()) # unigrams
-				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
-				if len(topterms) < 2:
-					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
-				print("\nTop terms are:", ", ".join(topterms))
-
-				print("\ndistance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text")
-				
-				if len(similar)>20:
-					print('\nFirst 10 documents:')
-					print(*similar[:10], sep='\n', end='\n')
-
-					print('\nLast 10 documents:')
-					print(*similar[-10:], sep='\n', end='\n')
-				else:
-					print("Tweets for this cluster are:")
-					print(*similar, sep='\n', end='\n')
-
-				available_labels_no = [str(i)+"-"+l for i,l in enumerate(sorted(list(information_groups.keys())))]
-				available_labels = [l for l in sorted(list(information_groups.keys()))] # do not move it to somewhere else, because in explorative mode, label updates should be reflected.
-				print("\n Available labels:", available_labels_no)
-
-				cluster_label = input("Enter (number of) an available or a new label (q to quit the iteration, Enter to postpone decision):")
-				if cluster_label == 'q':
-					break
-				elif cluster_label == '':
-					print("This group of tweets were skipped for this iteration!")
-					continue
-
-				elif cluster_label.isdigit() and int(cluster_label) < len(information_groups):
-						information_groups[available_labels[int(cluster_label)]] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
-						print("Group assigned to the available label:", available_labels[int(cluster_label)])
-						print("Cluster number:", cn, "its label:", available_labels[int(cluster_label)])
-				elif mchoice == '3':
-						if cluster_label not in information_groups: # in order to avoid overwriting content of a label
-							information_groups[cluster_label] = []
-						information_groups[cluster_label] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
-						print("Group assigned to a NEW label:", cluster_label)
-						print("Cluster number:", cn, "its label:", cluster_label)
-					#print(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
-				else:
-					print("\nEnter a label or label number that is available. If you want to add new labels as you are exploring you should activate the explorative mode:3 from the previous step. Annotation of this group will be skipped.")
-				
-				print("Next cluster is coming ...")
-				time.sleep(1) # wait while showing result of the assignment
-
-		
+			print("Next cluster is coming ...")
+			time.sleep(1) # wait while showing result of the assignment
+					
 		print('\nEnd of Iteration, available groups:')
 		print(*information_groups, sep='\n', end='\n\n')
-
-		
+				
 		for k,v in information_groups.items():
 			identified_tweet_ids += v
 
@@ -366,6 +364,7 @@ if __name__ == "__main__":
 
 		print('number of remaining tweets to be identified:', len(tweetsDF))
 
+			
 		if candidate_cluster_count == 0: # if there is not any candidate in this clustering result, repeat the clustering.
 			print("\nThere is not any good group candidate, new iteration is starting ...")
 			# relax the conditions for a group to be considered.
@@ -386,7 +385,8 @@ if __name__ == "__main__":
 			iter_choice = input("Target was achieved. Press y if you want to do one more iteration:")
 			if iter_choice != 'y':
 				break
-
+			
+		
 	print("Ask if they want to write the groups to a file, which features are needed, which file formats: json, tsv?")
 	for k, v in information_groups.items():
 		group_tweets = [tw for tw in tweetlist if tw["id_str"] in v]

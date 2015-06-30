@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-
 import output
-=======
->>>>>>> origin/ron
 import configparser
 import sys
 import pymongo
@@ -46,12 +42,6 @@ config.read('/home/elif/relevancer/myconfig.ini')
 client_host = config.get('mongodb', 'client_host')
 client_port = int(config.get('mongodb', 'client_port'))
 db_name = config.get('mongodb', 'db_name')
-<<<<<<< HEAD
-user_name = config.get('mongodb', 'user_name')
-passwd = config.get('mongodb', 'passwd')
-
-
-=======
 coll_name = config.get('mongodb', 'coll_name')
 if config.has_option('mongodb', 'user_name'):
    user_name = config.get('mongodb', 'user_name')
@@ -73,7 +63,7 @@ except Exception:
    logging.error("Database Connection Failed!")
    sys.exit("Database connection failed!")
    pass
->>>>>>> origin/ron
+
  
 
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
@@ -112,14 +102,6 @@ class MLStripper(HTMLParser):
 class Twtokenizer():
 	
 	def __init__(self):
-<<<<<<< HEAD
-		
-=======
-		
-	
-	
->>>>>>> origin/ron
-	
 		self.abbreviations = ['i.v.m.','a.s.','knp.']
 		print('init:',self.abbreviations)
 
@@ -362,11 +344,7 @@ if __name__ == "__main__":
 	
 	while True:
 
-<<<<<<< HEAD
 		km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
-=======
-		
->>>>>>> origin/ron
 
 		print("\nThe silhouette score (between 0 and 1, the higher is the better):", metrics.silhouette_score(doc_feat_mtrx, km.labels_, metric='euclidean',sample_size=5000))
 

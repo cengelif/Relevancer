@@ -1,7 +1,7 @@
 import output
 import configparser
 import sys
-import pymongo
+import pymongo as pm
 import logging
 import argparse
 import json
@@ -25,7 +25,7 @@ from sklearn import metrics
 
 
 #Logging
-logging.basicConfig(filename='/home/elif/relevancer/myapp.log',
+logging.basicConfig(filename='/home/elif/Project/Relevancer/myapp.log',
                             #filemode='a',
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%d-%m-%Y, %H:%M',
@@ -36,7 +36,7 @@ logging.info("Script started")
 
 #Config Parser
 config = configparser.ConfigParser()
-config.read('/home/elif/relevancer/myconfig.ini')
+config.read('/home/elif/Project/Relevancer/myconfig.ini')
 
 #MongoLab OAuth;
 client_host = config.get('mongodb', 'client_host')
@@ -52,6 +52,13 @@ if config.has_option('mongodb', 'passwd'):
 mongo_query = {}
 
 #Connect to database
+#connection = pm.MongoClient(client_host, client_port)
+#rlvdb = connection[db_name]  #Database
+#if ('user_name' in locals()) and ('passwd' in locals()):
+#    rlvdb.authenticate(user_name, passwd)
+#rlvcl = rlvdb[coll_name] #Collection
+#logging.info('Connected to Database')
+
 try:
    connection = pm.MongoClient(client_host, client_port)
    rlvdb = connection[db_name]  #Database
@@ -61,6 +68,7 @@ try:
    logging.info('Connected to Database')
 except Exception:
    logging.error("Database Connection Failed!")
+   print("Unexpected error:", sys.exc_info()[0])
    sys.exit("Database connection failed!")
    pass
 
@@ -304,7 +312,9 @@ if __name__ == "__main__":
 
    # tweetlist = read_json_tweets_file(args.infile, args.lang)
 	tweetlist = read_json_tweets_database(args.lang)
+	print("#tweets",len(tweetlist))
 	tweetsDF = pd.DataFrame(tweetlist)
+	print("columns:",tweetsDF.columns)
 	tweetsDF.set_index("created_at", inplace=True)
 	tweetsDF.sort_index(inplace=True)
 	print("\nNumber of the tweets:",len(tweetsDF))

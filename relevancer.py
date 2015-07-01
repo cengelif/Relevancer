@@ -52,13 +52,6 @@ if config.has_option('mongodb', 'passwd'):
 mongo_query = {}
 
 #Connect to database
-#connection = pm.MongoClient(client_host, client_port)
-#rlvdb = connection[db_name]  #Database
-#if ('user_name' in locals()) and ('passwd' in locals()):
-#    rlvdb.authenticate(user_name, passwd)
-#rlvcl = rlvdb[coll_name] #Collection
-#logging.info('Connected to Database')
-
 try:
    connection = pm.MongoClient(client_host, client_port)
    rlvdb = connection[db_name]  #Database

@@ -60,8 +60,7 @@ try:
    rlvcl = rlvdb[coll_name] #Collection
    logging.info('Connected to Database')
 except Exception:
-   logging.error("Database Connection Failed!")
-   print("Unexpected error:", sys.exc_info()[0])
+   logging.error("Unexpected error:"+ str(sys.exc_info()))
    sys.exit("Database connection failed!")
    pass
 
@@ -77,9 +76,11 @@ parser = argparse.ArgumentParser(description='Detect information groups in a mic
 
 
 parser.add_argument('-f', '--infile', type=str, help='input file should contain the microtexts') # format of the file should be defined later.
-parser.add_argument('-l', '--lang', type=str, default='en', help='language of the microtext that will be selected to be processed further.')
+parser.add_argument('-l', '--lang', type=str, default='en', action='store', help='language of the microtext that will be selected to be processed further.')
+#parser.add_argument('-d', '--database', type=str, action='store', help='all tweets get from database')
 
 args = parser.parse_args()
+#print (args)
 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
@@ -87,6 +88,7 @@ target_labeling_ratio = 0.7 # percentage of the tweets that should be labeled, u
 
 print("The microtext file is:", args.infile)
 print("The language to be processed is:", args.lang)
+#print("The tweets that are in database:", args.database)
 
 class MLStripper(HTMLParser):
 	def __init__(self):
@@ -240,12 +242,12 @@ def read_json_tweets_database(reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
-	
+		
 	for i, t in enumerate(rlvcl.find(mongo_query)):
-
+		
 		if i == 10000: # restrict line numbers for test
 			break
-		
+				
       # t = json.loads(ln)
 		lang_cntr[t["lang"]] += 1
 
@@ -297,14 +299,19 @@ def get_cluster_sizes(kmeans_result,doclist):
 	for l in set(kmeans_result.labels_):
 		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
 	return clust_len_cntr
-
+        
 if __name__ == "__main__":
-
+        	
 	tok_result_col = "texttokCap"
 	tok_result_lower_col = "texttok"
 
-   # tweetlist = read_json_tweets_file(args.infile, args.lang)
+   	# tweetlist = read_json_tweets_file(args.infile, args.lang)
+	#if parser.parse_args(['-f', 'infile']): #args == '-f':
+	#	tweetlist = read_json_tweets_file(args.infile)
+	#elif parser.parse_args(['-d', 'database']): #args == '-d':
 	tweetlist = read_json_tweets_database(args.lang)
+	#else:
+	#	tweetlist = read_json_tweets_file(args.infile)
 	print("#tweets",len(tweetlist))
 	tweetsDF = pd.DataFrame(tweetlist)
 	print("columns:",tweetsDF.columns)

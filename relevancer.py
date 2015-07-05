@@ -24,8 +24,28 @@ from sklearn.decomposition import PCA
 from sklearn import metrics
 
 
+parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
+
+#parser.add_argument('integers', metavar='N', type=int, nargs='+',
+#				   help='an integer for the accumulator')
+#parser.add_argument('--sum', dest='accumulate', action='store_const',
+#				   const=sum, default=max,
+#				   help='sum the integers (default: find the max)')
+
+
+# Find a way to print the help with the default parameters when the command is: python relevancer --help
+parser.add_argument('-f', '--infile', type=str, help='input file should contain the microtexts') # format of the file should be defined later.
+parser.add_argument('-l', '--lang', type=str, default='en', action='store', help='language of the microtext that will be selected to be processed further.')
+parser.add_argument('-t', '--tok', type=str, default=False, action='store', help='Should the tweets be tokenized? Default: False')
+parser.add_argument('-d', '--mongodb', type=str, default='myconfig.ini', action='store', help='provide MongoDB credentials')
+parser.add_argument('-g', '--logfile', type=str, default='myapp.log', action='store', help='provide log file name')
+
+args = parser.parse_args()
+#print (args)
+
+
 #Logging
-logging.basicConfig(filename='myapp.log',
+logging.basicConfig(filename=args.logfile,
                             #filemode='a',
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%d-%m-%Y, %H:%M',
@@ -36,7 +56,7 @@ logging.info("Script started")
 
 #Config Parser
 config = configparser.ConfigParser()
-config.read('/home/elif/Project/Relevancer/myconfig.ini')
+config.read(args.mongodb)
 
 #MongoLab OAuth;
 client_host = config.get('mongodb', 'client_host')
@@ -49,7 +69,7 @@ if config.has_option('mongodb', 'passwd'):
    passwd = config.get('mongodb', 'passwd')
 
 #Mongo query
-mongo_query = {}
+mongo_query = {} # we may read this from a json file.
 
 #Connect to database
 try:
@@ -64,29 +84,15 @@ except Exception:
    sys.exit("Database connection failed!")
    pass
 
- 
-
-parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
-
-#parser.add_argument('integers', metavar='N', type=int, nargs='+',
-#				   help='an integer for the accumulator')
-#parser.add_argument('--sum', dest='accumulate', action='store_const',
-#				   const=sum, default=max,
-#				   help='sum the integers (default: find the max)')
-
-
-parser.add_argument('-f', '--infile', type=str, help='input file should contain the microtexts') # format of the file should be defined later.
-parser.add_argument('-l', '--lang', type=str, default='en', action='store', help='language of the microtext that will be selected to be processed further.')
-#parser.add_argument('-d', '--database', type=str, action='store', help='all tweets get from database')
-
-args = parser.parse_args()
-#print (args)
-
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
-target_labeling_ratio = 0.7 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+target_labeling_ratio = 0.4 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 
-print("The microtext file is:", args.infile)
+if args.infile is not None:
+	print("The tweet file is:", args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
+else:
+	print("There is not any tweet text file. The default MongoDB configuration file is being read!")
+
 print("The language to be processed is:", args.lang)
 #print("The tweets that are in database:", args.database)
 
@@ -294,16 +300,13 @@ def read_json_tweets_database(reqlang='en'):
 
 	return ftwits
 
-def get_cluster_sizes(kmeans_result,doclist):
+def get_cluster_sizes(kmeans_result, doclist):
 	clust_len_cntr = Counter()
 	for l in set(kmeans_result.labels_):
 		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
 	return clust_len_cntr
         
 if __name__ == "__main__":
-        	
-	tok_result_col = "texttokCap"
-	tok_result_lower_col = "texttok"
 
    	# tweetlist = read_json_tweets_file(args.infile, args.lang)
 	#if parser.parse_args(['-f', 'infile']): #args == '-f':
@@ -312,6 +315,7 @@ if __name__ == "__main__":
 	tweetlist = read_json_tweets_database(args.lang)
 	#else:
 	#	tweetlist = read_json_tweets_file(args.infile)
+
 	print("#tweets",len(tweetlist))
 	tweetsDF = pd.DataFrame(tweetlist)
 	print("columns:",tweetsDF.columns)
@@ -320,17 +324,42 @@ if __name__ == "__main__":
 	print("\nNumber of the tweets:",len(tweetsDF))
 	print("\nAvailable attributes of the tweets:",tweetsDF.columns)
 
-	twtknzr = Twtokenizer()
-	tweetsDF = twtknzr.tokenize_df(tweetsDF, texcol='text', rescol=tok_result_col, addLowerTok=False)
-	tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
-	print("\nAvailable attributes of the tokenized tweets:",tweetsDF.columns)
-	print("\ntweet set summary:", tweetsDF.info())
-	print(tweetsDF[tok_result_col][:5])
 
-	rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
-	rtfield = tweetsDF["is_retweet"]==False
-	tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
-	tweetsDF = tweetsDF[tweetsDF.is_notrt]
+	if args.tok: # create a function for that step!
+
+		tok_result_col = "texttokCap"
+		tok_result_lower_col = "texttok"
+
+		twtknzr = Twtokenizer()
+		tweetsDF = twtknzr.tokenize_df(tweetsDF, texcol='text', rescol=tok_result_col, addLowerTok=False)
+		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
+		print("\nAvailable attributes of the tokenized tweets:",tweetsDF.columns)
+		print("\ntweet set summary:", tweetsDF.info())
+		print(tweetsDF[tok_result_col][:5])
+
+		rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
+		rtfield = tweetsDF["is_retweet"]==False
+		tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
+		tweetsDF = tweetsDF[tweetsDF.is_notrt]
+
+		print("Tweets are tokenized.")
+	else: # do not change the text col
+		tok_result_col = "text"
+		
+		tok_result_lower_col = "texttok"
+		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
+
+		print("\nAvailable attributes of the tweets:",tweetsDF.columns)
+		print("\ntweet set summary:", tweetsDF.info())
+		print(tweetsDF[tok_result_col][:5])
+
+		rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
+		rtfield = tweetsDF["is_retweet"]==False
+		tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
+		tweetsDF = tweetsDF[tweetsDF.is_notrt]
+
+		print("\ntweets are NOT tokenized.")
+
 	start_tweet_size = len(tweetsDF)
 	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
 
@@ -396,6 +425,28 @@ if __name__ == "__main__":
 				
 			print("Next cluster is coming ...")
 			time.sleep(1) # wait while showing result of the assignment
+
+		else: # else for the 'for'. This means there is not any good cluster!
+			print("\nThere is not any good group candidate in the last clustering.")
+
+			if len(identified_tweet_ids)/len(tweetsDF) < target_labeling_ratio:
+				print('\nNew clustering will be done to achieve the target.')
+				print('current labeled ratio is:', len(identified_tweet_ids)/len(tweetsDF))
+				print('target labeling ratio is:', target_labeling_ratio)
+
+				print("current distance thresholds are:", min_dist_thres, max_dist_thres)
+				time.sleep(5)
+				continue
+
+			else: # else ask the user.
+				iter_choice = input("Target was achieved. Press y if you want to do one more iteration:")
+			
+				if iter_choice != 'y':
+					min_dist_thres += 0.01
+					max_dist_thres += 0.01
+					print("Relaxed distance thresholds for the group selection are:", min_dist_thres, max_dist_thres)
+					time.sleep(5)
+					continue
 					
 		print('\nEnd of Iteration, available groups:')
 		print(*information_groups, sep='\n', end='\n\n')
@@ -410,29 +461,7 @@ if __name__ == "__main__":
 		tweetsDF = tweetsDF[~tweetsDF.id_str.isin(identified_tweet_ids)]
 
 		print('number of remaining tweets to be identified:', len(tweetsDF))
-
-			
-		if candidate_cluster_count == 0: # if there is not any candidate in this clustering result, repeat the clustering.
-			print("\nThere is not any good group candidate, new iteration is starting ...")
-			# relax the conditions for a group to be considered.
-			min_dist_thres += 0.01
-			max_dist_thres += 0.01
-			print("Relaxed distance thresholds are:", min_dist_thres, max_dist_thres)
-			time.sleep(5)
-			continue
-		elif len(identified_tweet_ids)/len(tweetsDF) < target_labeling_ratio:
-			print('\nNew clustering will be done to achieve the target.')
-			print('current labeled ratio is:', len(identified_tweet_ids)/len(tweetsDF))
-			print('target labeling ratio is:', target_labeling_ratio)
-
-			print('\ncandidate cluster count:',candidate_cluster_count)
-			print("current distance thresholds are:", min_dist_thres, max_dist_thres)
-			time.sleep(5)
-		else: # else ask the user.
-			iter_choice = input("Target was achieved. Press y if you want to do one more iteration:")
-			if iter_choice != 'y':
-				break
-			
+		
 		
 	print("Ask if they want to write the groups to a file, which features are needed, which file formats: json, tsv?")
 	for k, v in information_groups.items():

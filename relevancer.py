@@ -25,7 +25,7 @@ from sklearn import metrics
 
 
 #Logging
-logging.basicConfig(filename='/home/elif/Project/Relevancer/myapp.log',
+logging.basicConfig(filename='myapp.log',
                             #filemode='a',
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%d-%m-%Y, %H:%M',

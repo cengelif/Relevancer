@@ -14,7 +14,7 @@ ToDo:
 - based on the identified/labeled tweets, a classifier may be able to predict label of a new cluster.
 - support configuration files
 - add create a classifier, test a classifier by classifying 10 docs and asking if they are good! option based on annotation after a while!
-- tokenizer should process: ‘
+- tokenizer should process:  ‘
 - put an option to go out of the complete iteration. Currently q quits only from the current iteration.
 - What should we do with the last batch of the clusters after we group majority of the tweets?
 """

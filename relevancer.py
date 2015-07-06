@@ -1,3 +1,24 @@
+"""
+Decisions:
+- Should we eliminate RTs: The default should be YES.
+- Numbers are used as features
+- if a clustering does not provide any candidate, change the thresholds in the next iteration!
+- change token pattern of TfidfVectorizer! take one character features into account: I, a, ... : Elif did it.
+- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues!
+
+ToDo:
+- n_clusters, for k should be assigned automatically at the beginning.
+- silhouette score can be provided with an explanation.
+- Write each group to files.
+- while writing to the file: write remaining tweets as "rest".
+- based on the identified/labeled tweets, a classifier may be able to predict label of a new cluster.
+- support configuration files
+- add create a classifier, test a classifier by classifying 10 docs and asking if they are good! option based on annotation after a while!
+- tokenizer should process: ‘
+- put an option to go out of the complete iteration. Currently q quits only from the current iteration.
+- What should we do with the last batch of the clusters after we group majority of the tweets?
+"""
+
 import output
 import configparser
 import sys
@@ -89,12 +110,21 @@ max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid 
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 result_collection = "relevancer_result"
 
+<<<<<<< HEAD
 
 if args.infile is not None:
 	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
 else:
 	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
 
+=======
+
+if args.infile is not None:
+	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
+else:
+	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
+
+>>>>>>> 0acafbd5580c9054713cf334b244e7314ea49c0c
 logging.info("The language to be processed is:"+args.lang)
 #print("The tweets that are in database:", args.database)
 

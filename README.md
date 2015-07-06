@@ -1,2 +1,2 @@
 # Relevancer
-This project is created and developed by Ali HURRIYETOGLU and Elif TURKAY.
+This project is created and developed by Ali HURRIYETOGLU, Elif TURKAY and Ron Boortman.

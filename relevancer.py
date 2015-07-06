@@ -1,3 +1,24 @@
+"""
+Decisions:
+- Should we eliminate RTs: The default should be YES.
+- Numbers are used as features
+- if a clustering does not provide any candidate, change the thresholds in the next iteration!
+- change token pattern of TfidfVectorizer! take one character features into account: I, a, ... : Elif did it.
+- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues!
+
+ToDo:
+- n_clusters, for k should be assigned automatically at the beginning.
+- silhouette score can be provided with an explanation.
+- Write each group to files.
+- while writing to the file: write remaining tweets as "rest".
+- based on the identified/labeled tweets, a classifier may be able to predict label of a new cluster.
+- support configuration files
+- add create a classifier, test a classifier by classifying 10 docs and asking if they are good! option based on annotation after a while!
+- tokenizer should process: ‘
+- put an option to go out of the complete iteration. Currently q quits only from the current iteration.
+- What should we do with the last batch of the clusters after we group majority of the tweets?
+"""
+
 import output
 import configparser
 import sys
@@ -86,14 +107,16 @@ except Exception:
 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
-target_labeling_ratio = 0.4 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+result_collection = "relevancer_result"
+
 
 if args.infile is not None:
-	print("The tweet file is:", args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
+	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
 else:
-	print("There is not any tweet text file. The default MongoDB configuration file is being read!")
+	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
 
-print("The language to be processed is:", args.lang)
+logging.info("The language to be processed is:"+args.lang)
 #print("The tweets that are in database:", args.database)
 
 class MLStripper(HTMLParser):
@@ -313,16 +336,18 @@ if __name__ == "__main__":
 	#	tweetlist = read_json_tweets_file(args.infile)
 	#elif parser.parse_args(['-d', 'database']): #args == '-d':
 	tweetlist = read_json_tweets_database(args.lang)
+	logging.info("number of tweets",len(tweetlist))
 	#else:
 	#	tweetlist = read_json_tweets_file(args.infile)
 
-	print("#tweets",len(tweetlist))
 	tweetsDF = pd.DataFrame(tweetlist)
-	print("columns:",tweetsDF.columns)
+	logging.info("columns:"+str(tweetsDF.columns))
+
 	tweetsDF.set_index("created_at", inplace=True)
 	tweetsDF.sort_index(inplace=True)
-	print("\nNumber of the tweets:",len(tweetsDF))
-	print("\nAvailable attributes of the tweets:",tweetsDF.columns)
+
+	logging.info("Number of the tweets:"+str(len(tweetsDF)))
+	logging.info("Available attributes of the tweets:"+str(tweetsDF.columns))
 
 
 	if args.tok: # create a function for that step!
@@ -333,7 +358,7 @@ if __name__ == "__main__":
 		twtknzr = Twtokenizer()
 		tweetsDF = twtknzr.tokenize_df(tweetsDF, texcol='text', rescol=tok_result_col, addLowerTok=False)
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
-		print("\nAvailable attributes of the tokenized tweets:",tweetsDF.columns)
+		print("\nAvailable attributes of the tokenized tweets:", tweetsDF.columns)
 		print("\ntweet set summary:", tweetsDF.info())
 		print(tweetsDF[tok_result_col][:5])
 
@@ -393,16 +418,28 @@ if __name__ == "__main__":
 		print("cluster candidates:", end=' ')
 
 		#local_information_groups = {'noise':[]} # contains cluster number for this iteration. It should pass the tweet ID information to the global_information_groups at end of each cycle
-		for cn, c_str in output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres):
+		output_cluster_list = output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres)
+
+		if len(output_cluster_list) == 0:
+			print("\nThere is not any good group candidate in the last clustering. New clustering with the relaxed selection conditions.")
+			
+			min_dist_thres += 0.01
+			max_dist_thres += 0.01
+			print("Relaxed distance thresholds for the group selection are:", min_dist_thres, max_dist_thres)
+			time.sleep(5)
+			continue
+
+		for cn, c_str, tw_ids in output_cluster_list:
 			#for cn, csize in clustersizes.most_common():
 			#	cn = int(cn)
 			
-			print(c_str)
+			print('\n'+c_str)
+			#print("current ids:", tw_ids) # remove this after testing
 			available_labels_no = [str(i)+"-"+l for i,l in enumerate(sorted(list(information_groups.keys())))]
 			available_labels = [l for l in sorted(list(information_groups.keys()))] # do not move it to somewhere else, because in explorative mode, label updates should be reflected.
 			print("\n Available labels:", available_labels_no)
 
-			cluster_label = input("Enter (number of) an available or a new label (q to quit the iteration, Enter to postpone decision):")
+			cluster_label = input("Enter (number of) an available or a new label (q to quit the iteration, Enter to skip making a decision for this group):")
 			if cluster_label == 'q':
 				break
 			elif cluster_label == '':
@@ -410,47 +447,25 @@ if __name__ == "__main__":
 				continue
 
 			elif cluster_label.isdigit() and int(cluster_label) < len(information_groups):
-				information_groups[available_labels[int(cluster_label)]] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+				information_groups[available_labels[int(cluster_label)]] += tw_ids #list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
 				print("Group assigned to the available label:", available_labels[int(cluster_label)])
 				print("Cluster number:", cn, "its label:", available_labels[int(cluster_label)])
 			elif mchoice == '3':
 				if cluster_label not in information_groups: # in order to avoid overwriting content of a label
 					information_groups[cluster_label] = []
-				information_groups[cluster_label] += list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+				information_groups[cluster_label] += tw_ids #list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
 				print("Group assigned to a NEW label:", cluster_label)
 				print("Cluster number:", cn, "its label:", cluster_label)
 			#print(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
 			else:
-				print("\nEnter a label or label number that is available. If you want to add new labels as you are exploring you should activate the explorative mode:3 from the previous step. Annotation of this group will be skipped.")
+				print("\nEnter a label or label number that is available. If you want to add new labels as you are exploring you should activate the explorative mode:3 from the previous step. \n Annotation of this group will be skipped.")
 				
 			print("Next cluster is coming ...")
 			time.sleep(1) # wait while showing result of the assignment
 
-		else: # else for the 'for'. This means there is not any good cluster!
-			print("\nThere is not any good group candidate in the last clustering.")
-
-			if len(identified_tweet_ids)/len(tweetsDF) < target_labeling_ratio:
-				print('\nNew clustering will be done to achieve the target.')
-				print('current labeled ratio is:', len(identified_tweet_ids)/len(tweetsDF))
-				print('target labeling ratio is:', target_labeling_ratio)
-
-				print("current distance thresholds are:", min_dist_thres, max_dist_thres)
-				time.sleep(5)
-				continue
-
-			else: # else ask the user.
-				iter_choice = input("Target was achieved. Press y if you want to do one more iteration:")
-			
-				if iter_choice != 'y':
-					min_dist_thres += 0.01
-					max_dist_thres += 0.01
-					print("Relaxed distance thresholds for the group selection are:", min_dist_thres, max_dist_thres)
-					time.sleep(5)
-					continue
-					
 		print('\nEnd of Iteration, available groups:')
 		print(*information_groups, sep='\n', end='\n\n')
-				
+			
 		for k,v in information_groups.items():
 			identified_tweet_ids += v
 
@@ -461,11 +476,68 @@ if __name__ == "__main__":
 		tweetsDF = tweetsDF[~tweetsDF.id_str.isin(identified_tweet_ids)]
 
 		print('number of remaining tweets to be identified:', len(tweetsDF))
+
+
+		print('current labeled ratio is:', len(identified_tweet_ids)/len(tweetsDF))
+		print('target labeling ratio is:', target_labeling_ratio)
+		print("current distance thresholds are:", min_dist_thres, max_dist_thres)
+		time.sleep(5)
 		
+		if len(identified_tweet_ids)/len(tweetsDF) < target_labeling_ratio:
+			print('\nNew clustering will be done to achieve the target.')
+			continue # 
+		else: # else ask the user.
+			iter_choice = input("\nTarget was achieved. Press y if you want to do one more iteration:")
+			if iter_choice == 'y': # if the user enter y, the infinite loop should be continued!
+				continue
+
+		# This will run after we reach the target or decide not to continue labeling any more after we actively decide to label mor eafter we reach the target.
+		label_rest_tweets = input("Press y if you want to label the remaining tweets without any selection criteria:")
+		if label_rest_tweets == 'y':
+			km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
+			
+
+			for cn, c_str, tw_ids in output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres, selection=False):
+				#for cn, csize in clustersizes.most_common():
+				#	cn = int(cn)
+				
+				print('\n'+c_str)
+				#print("current ids:", tw_ids) # remove this after testing
+				available_labels_no = [str(i)+"-"+l for i,l in enumerate(sorted(list(information_groups.keys())))]
+				available_labels = [l for l in sorted(list(information_groups.keys()))] # do not move it to somewhere else, because in explorative mode, label updates should be reflected.
+				print("\n Available labels:", available_labels_no)
+
+				cluster_label = input("Enter (number of) an available or a new label (q to quit the iteration, Enter to skip making a decision):")
+				if cluster_label == 'q':
+					break
+				elif cluster_label == '':
+					print("This group of tweets were skipped for this iteration!")
+					continue
+
+				elif cluster_label.isdigit() and int(cluster_label) < len(information_groups):
+					information_groups[available_labels[int(cluster_label)]] += tw_ids #list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+					print("Group assigned to the available label:", available_labels[int(cluster_label)])
+					print("Cluster number:", cn, "its label:", available_labels[int(cluster_label)])
+				elif mchoice == '3':
+					if cluster_label not in information_groups: # in order to avoid overwriting content of a label
+						information_groups[cluster_label] = []
+					information_groups[cluster_label] += tw_ids #list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+					print("Group assigned to a NEW label:", cluster_label)
+					print("Cluster number:", cn, "its label:", cluster_label)
+				#print(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)
+				else:
+					print("\nEnter a label or label number that is available. If you want to add new labels as you are exploring you should activate the explorative mode:3 from the previous step. \n Annotation of this group will be skipped.")
+					
+				print("Next cluster is coming ...")
+				time.sleep(1) # wait while showing result of the assignment
+		
+		break # go out of the infinite while loop		
 		
 	print("Ask if they want to write the groups to a file, which features are needed, which file formats: json, tsv?")
 	for k, v in information_groups.items():
 		group_tweets = [tw for tw in tweetlist if tw["id_str"] in v]
 		print("length of the tweets and ids (they must be equal!)", len(group_tweets), len(v)) # they should be equal!
-		#with open(k,'w') as fw:
-		# json.dumps
+
+	rlvdb[result_collection].drop() # be sure to overwrite it! Instead of overwriting, it can be inserted by adding a date and time to this dictionary.
+	rlvdb[result_collection].insert(information_groups)
+	print("The result was written to the collection:", result_collection)

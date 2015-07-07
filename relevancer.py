@@ -52,7 +52,6 @@ logging.basicConfig(filename=args.logfile,
 
 logging.info("Script started")
 
-
 def connect_mongodb(configfile="myconfig.ini"):
 #Config Parser
 	config = configparser.ConfigParser()
@@ -68,11 +67,6 @@ def connect_mongodb(configfile="myconfig.ini"):
 	if config.has_option('mongodb', 'passwd'):
 	   passwd = config.get('mongodb', 'passwd')
 	  
-	print(client_host, client_port,db_name,coll_name,user_name,passwd)
-
-#Mongo query
-	#mongo_query = {} # we may read this from a json file.
-
 #Connect to database
 	try:
 		connection = pm.MongoClient(client_host, client_port)
@@ -116,7 +110,6 @@ class MLStripper(HTMLParser):
 		self.fed.append(d)
 	def get_data(self):
 		return ''.join(self.fed)
-
 
 class Twtokenizer():
 	
@@ -189,18 +182,15 @@ class Twtokenizer():
 	
 		return tokdf.copy()
 
-
 def strip_tags(html):
 	s = MLStripper()
 	s.feed(html)
 	return s.get_data()
 
-
 def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
-	
 	with open(myjsontweetfile) as jfile:
 		for i, ln in enumerate(jfile):
 
@@ -252,7 +242,6 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 		print("Number of documents per languge:",lang_cntr)
 
 		return ftwits
-
 
 def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	ftwits = []
@@ -353,8 +342,6 @@ def tok_results(tweetsDF):
 
 		print("Tweets are tokenized.")
 	else: # do not change the text col
-		
-		
 		tok_result_lower_col = "texttok"
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
 
@@ -371,7 +358,7 @@ def tok_results(tweetsDF):
 		
 	return results
 	
-def get_uni_bigrams(text, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"):
+def get_uni_bigrams(text, token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
 	
 	token_list = re.findall(token_pattern, text)
 	
@@ -381,7 +368,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 
 	freqcutoff = int(m.log(len(tweetsDF))/2)
 	
-	my_token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"
+	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
 	text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
@@ -480,7 +467,6 @@ if __name__ == "__main__":
 	start_tweet_size = len(tweetsDF)
 	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
 
-
 	print("Choose mode of the annotation.")
 	
 	print("1. relevant vs. irrelevant (default)")
@@ -494,7 +480,6 @@ if __name__ == "__main__":
 		mylabels = input("Enter a comma seperated label list:").split(",")
 		information_groups = {k:[] for k in mylabels}
 		print("Labels are:", [l for l in sorted(list(information_groups.keys()))])
-
 
 	identified_tweet_ids = []
 	
@@ -588,7 +573,6 @@ if __name__ == "__main__":
 		if label_rest_tweets == 'y':
 			km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
 			
-
 			for cn, c_str, tw_ids in output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres, selection=False):
 				#for cn, csize in clustersizes.most_common():
 				#	cn = int(cn)

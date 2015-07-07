@@ -1,4 +1,3 @@
-import output
 import configparser
 import sys
 import pymongo as pm
@@ -15,7 +14,6 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 import re
-
 
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -55,10 +53,10 @@ logging.basicConfig(filename=args.logfile,
 logging.info("Script started")
 
 
-def connect_mongodb(configfile='myconfig.ini'):
+def connect_mongodb(configfile="myconfig.ini"):
 #Config Parser
 	config = configparser.ConfigParser()
-	config.read(args.mongodb)
+	config.read(configfile)
 
 #MongoLab OAuth;
 	client_host = config.get('mongodb', 'client_host')
@@ -69,6 +67,11 @@ def connect_mongodb(configfile='myconfig.ini'):
 	   user_name = config.get('mongodb', 'user_name')
 	if config.has_option('mongodb', 'passwd'):
 	   passwd = config.get('mongodb', 'passwd')
+	  
+	print(client_host, client_port,db_name,coll_name,user_name,passwd)
+
+#Mongo query
+	#mongo_query = {} # we may read this from a json file.
 
 #Connect to database
 	try:
@@ -84,33 +87,24 @@ def connect_mongodb(configfile='myconfig.ini'):
 		pass
 
 	return rlvdb, rlvcl
+	
 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 result_collection = "relevancer_result"
 
-
-if args.tok: 
+if args.tok: # create a function for that step!
 	tok_result_col = "texttokCap"
 else:
 	tok_result_col = "text"
-
-
+	
 if args.infile is not None:
 	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
 else:
 	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
-
-
-if args.infile is not None:
-	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
-else:
-	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
-
 
 logging.info("The language to be processed is:"+args.lang)
-
 
 class MLStripper(HTMLParser):
 	def __init__(self):
@@ -210,7 +204,7 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 	with open(myjsontweetfile) as jfile:
 		for i, ln in enumerate(jfile):
 
-			if i == 2000: # restrict line numbers for test
+			if i == 10000: # restrict line numbers for test
 				break
 			
 			t = json.loads(ln)
@@ -260,7 +254,7 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 		return ftwits
 
 
-def read_json_tweets_database(rlvcl, mongo_query,  tweet_count=-1, reqlang='en'):
+def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
@@ -268,7 +262,7 @@ def read_json_tweets_database(rlvcl, mongo_query,  tweet_count=-1, reqlang='en')
 	for i, t in enumerate(rlvcl.find(mongo_query)):
 		
 		if i == tweet_count: # restrict line numbers for test
-			break#logging for last value of i
+			break
 				
       # t = json.loads(ln)
 		lang_cntr[t["lang"]] += 1
@@ -316,28 +310,33 @@ def read_json_tweets_database(rlvcl, mongo_query,  tweet_count=-1, reqlang='en')
 
 	return ftwits
 
-def create_dataframe(tweetlist):
+def get_cluster_sizes(kmeans_result, doclist):
+	clust_len_cntr = Counter()
+	for l in set(kmeans_result.labels_):
+		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
+	return clust_len_cntr
 	
+def create_dataframe(tweetlist):
+
 	dataframe = pd.DataFrame(tweetlist)
 	data_cntr = Counter()
+	
 	logging.info("columns:"+str(dataframe.columns))
 	
 	dataframe.set_index("created_at", inplace=True)
 	dataframe.sort_index(inplace=True)
-	
+
 	logging.info("Number of the tweets:"+str(len(dataframe)))
 	logging.info("Available attributes of the tweets:"+str(dataframe.columns))
-		
+	
 	return dataframe
 	
 def tok_results(tweetsDF):
-
 	results = []
-	results_cntr = Counter()
+	tok_cntr = Counter()
 	
 	if args.tok: # create a function for that step!
 
-		#tok_result_col = "texttokCap"
 		tok_result_lower_col = "texttok"
 
 		twtknzr = Twtokenizer()
@@ -354,7 +353,7 @@ def tok_results(tweetsDF):
 
 		print("Tweets are tokenized.")
 	else: # do not change the text col
-		#tok_result_col = "text"
+		
 		
 		tok_result_lower_col = "texttok"
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
@@ -369,23 +368,16 @@ def tok_results(tweetsDF):
 		tweetsDF = tweetsDF[tweetsDF.is_notrt]
 
 		print("\ntweets are NOT tokenized.")
-	
+		
 	return results
 	
-def get_cluster_sizes(kmeans_result, doclist):
-	clust_len_cntr = Counter()
-	for l in set(kmeans_result.labels_):
-		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
-	return clust_len_cntr
-
-
 def get_uni_bigrams(text, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"):
 	
 	token_list = re.findall(token_pattern, text)
 	
 	return [" ".join((u,v)) for (u,v) in zip(token_list[:-1], token_list[1:])] + token_list
 	 
-def create_clusters(tweetsDF, tok_result_col='text', min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, selection=True):
+def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, selection=True):
 
 	freqcutoff = int(m.log(len(tweetsDF))/2)
 	
@@ -426,7 +418,7 @@ def create_clusters(tweetsDF, tok_result_col='text', min_dist_thres=0.6, max_dis
 					
 				cluster_bigram_cntr = Counter()
 				for txt in tweetsDF[tok_result_col].values[similar_indices]:
-					cluster_bigram_cntr.update(get_uni_bigrams(txt)) #regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True)
+					cluster_bigram_cntr.update(get_uni_bigrams(txt)) #regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
 					#cluster_bigram_cntr.update(txt.split()) # unigrams
 				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
 				if len(topterms) < 2:
@@ -452,8 +444,6 @@ def create_clusters(tweetsDF, tok_result_col='text', min_dist_thres=0.6, max_dis
 				cluster_bigram_cntr = Counter()
 				for txt in tweetsDF[tok_result_col].values[similar_indices]:
 					cluster_bigram_cntr.update(get_uni_bigrams(txt))
-					#cluster_bigram_cntr.update(regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
-					#cluster_bigram_cntr.update(txt.split()) # unigrams
 				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
 				if len(topterms) < 2:
 					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
@@ -476,13 +466,12 @@ def create_clusters(tweetsDF, tok_result_col='text', min_dist_thres=0.6, max_dis
 			cluster_str_list.append({'cno':cn, 'cstr':cluster_info_str, 'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
 
 	return cluster_str_list
-
-
- 
+        
 if __name__ == "__main__":
+	import output
 	
 	tweetlist = read_json_tweets_database(args.lang)
-	logging.info("number of tweets"+str(len(tweetlist)))
+	logging.info("number of tweets",len(tweetlist))
 	
 	tweetsDF = create_dataframe(tweetlist)
 	

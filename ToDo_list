@@ -4,7 +4,7 @@ Decisions:
 - Numbers are used as features
 - if a clustering does not provide any candidate, change the thresholds in the next iteration!
 - change token pattern of TfidfVectorizer! take one character features into account: I, a, ... : Elif did it.
-- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues!
+- Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues as well!
 
 ToDo:
 - n_clusters, for k should be assigned automatically at the beginning.
@@ -22,4 +22,9 @@ ToDo:
 - Add possibility to getting online data as input. Think over processing online.
 - If the data is too big, process/annotate a certain amount of it. Read the rest as you have less data in the memory. As you
   have labeled data, you can create a classifier from the labeled data and help the annotator.
+- we need to have proper documentation, tests and proper sw package structure (check the project cookie clutter)
+- how can you verify that the feature extraction step take almost all emoticons into account?
+- implement implicit evaluation: same users/hashtags should be consistently under the same label.
+- cluster users/hashtags based on users/hashtags
+- include summary of a hashtag/user information in the cluster summary. Which information can be useful?
 """

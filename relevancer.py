@@ -1,4 +1,3 @@
-import output
 import configparser
 import sys
 import pymongo as pm
@@ -8,13 +7,13 @@ import json
 import datetime
 import time
 import math as m
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, namedtuple
 from html.parser import HTMLParser
 
 import pandas as pd
 import numpy as np
 import scipy as sp
-import regex
+import re
 
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -54,49 +53,58 @@ logging.basicConfig(filename=args.logfile,
 logging.info("Script started")
 
 
+def connect_mongodb(configfile="myconfig.ini"):
 #Config Parser
-config = configparser.ConfigParser()
-config.read(args.mongodb)
+	config = configparser.ConfigParser()
+	config.read(configfile)
 
 #MongoLab OAuth;
-client_host = config.get('mongodb', 'client_host')
-client_port = int(config.get('mongodb', 'client_port'))
-db_name = config.get('mongodb', 'db_name')
-coll_name = config.get('mongodb', 'coll_name')
-if config.has_option('mongodb', 'user_name'):
-   user_name = config.get('mongodb', 'user_name')
-if config.has_option('mongodb', 'passwd'):
-   passwd = config.get('mongodb', 'passwd')
+	client_host = config.get('mongodb', 'client_host')
+	client_port = int(config.get('mongodb', 'client_port'))
+	db_name = config.get('mongodb', 'db_name')
+	coll_name = config.get('mongodb', 'coll_name')
+	if config.has_option('mongodb', 'user_name'):
+	   user_name = config.get('mongodb', 'user_name')
+	if config.has_option('mongodb', 'passwd'):
+	   passwd = config.get('mongodb', 'passwd')
+	  
+	print(client_host, client_port,db_name,coll_name,user_name,passwd)
 
 #Mongo query
-mongo_query = {} # we may read this from a json file.
+	#mongo_query = {} # we may read this from a json file.
 
 #Connect to database
-try:
-   connection = pm.MongoClient(client_host, client_port)
-   rlvdb = connection[db_name]  #Database
-   if ('user_name' in locals()) and ('passwd' in locals()):
-      rlvdb.authenticate(user_name, passwd)
-   rlvcl = rlvdb[coll_name] #Collection
-   logging.info('Connected to Database')
-except Exception:
-   logging.error("Unexpected error:"+ str(sys.exc_info()))
-   sys.exit("Database connection failed!")
-   pass
+	try:
+		connection = pm.MongoClient(client_host, client_port)
+		rlvdb = connection[db_name]  #Database
+		if ('user_name' in locals()) and ('passwd' in locals()):
+			rlvdb.authenticate(user_name, passwd)
+		rlvcl = rlvdb[coll_name] #Collection
+		logging.info('Connected to Database')
+	except Exception:
+		logging.error("Unexpected error:"+ str(sys.exc_info()))
+		sys.exit("Database connection failed!")
+		pass
+
+	return rlvdb, rlvcl
+	
 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 result_collection = "relevancer_result"
 
-
+if args.tok: # create a function for that step!
+	tok_result_col = "texttokCap"
+else:
+	tok_result_col = "text"
+	
 if args.infile is not None:
 	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
 else:
 	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
 
 logging.info("The language to be processed is:"+args.lang)
-#print("The tweets that are in database:", args.database)
 
 class MLStripper(HTMLParser):
 	def __init__(self):
@@ -246,14 +254,14 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 		return ftwits
 
 
-def read_json_tweets_database(reqlang='en'):
+def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
 		
 	for i, t in enumerate(rlvcl.find(mongo_query)):
 		
-		if i == 10000: # restrict line numbers for test
+		if i == tweet_count: # restrict line numbers for test
 			break
 				
       # t = json.loads(ln)
@@ -307,31 +315,28 @@ def get_cluster_sizes(kmeans_result, doclist):
 	for l in set(kmeans_result.labels_):
 		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
 	return clust_len_cntr
-        
-if __name__ == "__main__":
+	
+def create_dataframe(tweetlist):
 
-   	# tweetlist = read_json_tweets_file(args.infile, args.lang)
-	#if parser.parse_args(['-f', 'infile']): #args == '-f':
-	#	tweetlist = read_json_tweets_file(args.infile)
-	#elif parser.parse_args(['-d', 'database']): #args == '-d':
-	tweetlist = read_json_tweets_database(args.lang)
-	logging.info("number of tweets",len(tweetlist))
-	#else:
-	#	tweetlist = read_json_tweets_file(args.infile)
+	dataframe = pd.DataFrame(tweetlist)
+	data_cntr = Counter()
+	
+	logging.info("columns:"+str(dataframe.columns))
+	
+	dataframe.set_index("created_at", inplace=True)
+	dataframe.sort_index(inplace=True)
 
-	tweetsDF = pd.DataFrame(tweetlist)
-	logging.info("columns:"+str(tweetsDF.columns))
-
-	tweetsDF.set_index("created_at", inplace=True)
-	tweetsDF.sort_index(inplace=True)
-
-	logging.info("Number of the tweets:"+str(len(tweetsDF)))
-	logging.info("Available attributes of the tweets:"+str(tweetsDF.columns))
-
-
+	logging.info("Number of the tweets:"+str(len(dataframe)))
+	logging.info("Available attributes of the tweets:"+str(dataframe.columns))
+	
+	return dataframe
+	
+def tok_results(tweetsDF):
+	results = []
+	tok_cntr = Counter()
+	
 	if args.tok: # create a function for that step!
 
-		tok_result_col = "texttokCap"
 		tok_result_lower_col = "texttok"
 
 		twtknzr = Twtokenizer()
@@ -348,7 +353,7 @@ if __name__ == "__main__":
 
 		print("Tweets are tokenized.")
 	else: # do not change the text col
-		tok_result_col = "text"
+		
 		
 		tok_result_lower_col = "texttok"
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
@@ -363,7 +368,115 @@ if __name__ == "__main__":
 		tweetsDF = tweetsDF[tweetsDF.is_notrt]
 
 		print("\ntweets are NOT tokenized.")
+		
+	return results
+	
+def get_uni_bigrams(text, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"):
+	
+	token_list = re.findall(token_pattern, text)
+	
+	return [" ".join((u,v)) for (u,v) in zip(token_list[:-1], token_list[1:])] + token_list
+	 
+def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, selection=True):
 
+	freqcutoff = int(m.log(len(tweetsDF))/2)
+	
+	my_token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"
+	
+	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
+	text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
+	
+	doc_feat_mtrx = text_vectors
+		
+	n_clust = int(m.sqrt(len(tweetsDF)))
+	n_initt = int(m.log10(len(tweetsDF)))
+	
+	km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=1000, n_init=n_initt) # , n_jobs=16
+	km.fit(doc_feat_mtrx)
+
+	cluster_str_list = []
+	#Cluster = namedtuple('Cluster', ['cno', 'cstr','tw_ids'])
+
+	clustersizes = get_cluster_sizes(km, tweetsDF[tok_result_col].values)
+	
+	for cn, csize in clustersizes.most_common():#range(args.ksize):#clustersizes.most_common():
+		cn = int(cn)
+					
+		similar_indices = (km.labels_== cn).nonzero()[0]
+			
+		similar = []
+		for i in similar_indices:
+			dist = sp.linalg.norm((km.cluster_centers_[cn] - doc_feat_mtrx[i]))
+			similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+		
+		similar = sorted(similar, reverse=False)
+		cluster_info_str = ''
+		if selection:
+			if (float(similar[0][:4]) < min_dist_thres) and (float(similar[-1][:4]) < max_dist_thres) and ((float(similar[0][:4])+0.5) > float(similar[-1][:4])): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+
+				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
+					
+				cluster_bigram_cntr = Counter()
+				for txt in tweetsDF[tok_result_col].values[similar_indices]:
+					cluster_bigram_cntr.update(get_uni_bigrams(txt)) #regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
+					#cluster_bigram_cntr.update(txt.split()) # unigrams
+				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
+				if len(topterms) < 2:
+					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
+				cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
+
+				cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
+					
+				if len(similar)>20:
+					cluster_info_str+='First 10 documents:\n'
+					cluster_info_str+= "\n".join(similar[:10]) + "\n"
+					#print(*similar[:10], sep='\n', end='\n')
+
+					cluster_info_str+='Last 10 documents:\n'
+					cluster_info_str+= "\n".join(similar[-10:]) + "\n"
+				else:
+					cluster_info_str+="Tweets for this cluster are:\n"
+					cluster_info_str+= "\n".join(similar) + "\n"
+				
+		else:
+				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
+					
+				cluster_bigram_cntr = Counter()
+				for txt in tweetsDF[tok_result_col].values[similar_indices]:
+					cluster_bigram_cntr.update(get_uni_bigrams(txt))
+				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
+				if len(topterms) < 2:
+					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
+				cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
+
+				cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
+					
+				if len(similar)>20:
+					cluster_info_str+='First 10 documents:\n'
+					cluster_info_str+= "\n".join(similar[:10]) + "\n"
+					#print(*similar[:10], sep='\n', end='\n')
+
+					cluster_info_str+='Last 10 documents:\n'
+					cluster_info_str+= "\n".join(similar[-10:]) + "\n"
+				else:
+					cluster_info_str+="Tweets for this cluster are:\n"
+					cluster_info_str+= "\n".join(similar) + "\n"
+		
+		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
+			cluster_str_list.append({'cno':cn, 'cstr':cluster_info_str, 'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
+
+	return cluster_str_list
+        
+if __name__ == "__main__":
+	import output
+	
+	tweetlist = read_json_tweets_database(args.lang)
+	logging.info("number of tweets",len(tweetlist))
+	
+	tweetsDF = create_dataframe(tweetlist)
+	
+	tok = tok_results(tweetsDF)
+	
 	start_tweet_size = len(tweetsDF)
 	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
 

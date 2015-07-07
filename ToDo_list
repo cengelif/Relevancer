@@ -17,4 +17,5 @@ ToDo:
 - tokenizer should process:  ‘
 - put an option to go out of the complete iteration. Currently q quits only from the current iteration.
 - What should we do with the last batch of the clusters after we group majority of the tweets?
+- Parallel processing for datasets taht are bigger than n a certain number.
 """

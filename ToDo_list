@@ -18,4 +18,5 @@ ToDo:
 - put an option to go out of the complete iteration. Currently q quits only from the current iteration.
 - What should we do with the last batch of the clusters after we group majority of the tweets?
 - Parallel processing for datasets taht are bigger than n a certain number.
+- Cleaner output: user doesnt need to see the tweet ids or the distance to the centroid.
 """

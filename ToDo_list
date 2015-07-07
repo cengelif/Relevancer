@@ -19,4 +19,7 @@ ToDo:
 - What should we do with the last batch of the clusters after we group majority of the tweets?
 - Parallel processing for datasets taht are bigger than n a certain number.
 - Cleaner output: user doesnt need to see the tweet ids or the distance to the centroid.
+- Add possibility to getting online data as input. Think over processing online.
+- If the data is too big, process/annotate a certain amount of it. Read the rest as you have less data in the memory. As you
+  have labeled data, you can create a classifier from the labeled data and help the annotator.
 """

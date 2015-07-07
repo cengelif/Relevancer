@@ -2,7 +2,7 @@ import relevancer as rlv
 
 rlvdb, rlvcl = rlv.connect_mongodb()
 
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=1000, reqlang='en')
 rlv.logging.info("number of tweets"+str(len(tweetlist)))
 	
 tweetsDF = rlv.create_dataframe(tweetlist)

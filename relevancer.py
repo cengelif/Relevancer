@@ -40,8 +40,6 @@ parser.add_argument('-d', '--mongodb', type=str, default='myconfig.ini', action=
 parser.add_argument('-g', '--logfile', type=str, default='myapp.log', action='store', help='provide log file name')
 
 args = parser.parse_args()
-#print (args)
-
 
 #Logging
 logging.basicConfig(filename=args.logfile,
@@ -58,6 +56,7 @@ def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
    config.read(configfile)
 
 #MongoLab OAuth;
+
    client_host = config.get('mongodb', 'client_host')
    client_port = int(config.get('mongodb', 'client_port'))
    db_name = config.get('mongodb', 'db_name')
@@ -68,11 +67,6 @@ def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
    if config.has_option('mongodb', 'passwd'):
       passwd = config.get('mongodb', 'passwd')
      
-   # print(client_host, client_port,db_name,coll_name,user_name,passwd)
-
-#Mongo query
-   #mongo_query = {} # we may read this from a json file.
-
 #Connect to database
    try:
       connection = pm.MongoClient(client_host, client_port)
@@ -367,9 +361,22 @@ def get_uni_bigrams(text, token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
 	token_list = re.findall(token_pattern, text)
 	
 	return [" ".join((u,v)) for (u,v) in zip(token_list[:-1], token_list[1:])] + token_list
-	 
-def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, selection=True):
+	
+def reverse_index_frequency(cluster_bigram_cntr):
+	reverse_index_freq_dict = {}
+	
+	for k, freq in cluster_bigram_cntr.most_common():
+		
+		if str(freq) not in reverse_index_freq_dict:
+			reverse_index_freq_dict[str(freq)] = []
+			
+		reverse_index_freq_dict[str(freq)].append(k)
 
+	return reverse_index_freq_dict
+
+def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True):
+	cluster_bigram_cntr = Counter()
+	
 	freqcutoff = int(m.log(len(tweetsDF))/2)
 	
 	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
@@ -390,34 +397,38 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 
 	clustersizes = get_cluster_sizes(km, tweetsDF[tok_result_col].values)
 	
+	
 	for cn, csize in clustersizes.most_common():#range(args.ksize):#clustersizes.most_common():
 		cn = int(cn)
 					
 		similar_indices = (km.labels_== cn).nonzero()[0]
 			
 		similar = []
+		similar_tuple_list = []
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - doc_feat_mtrx[i]))
 			similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]))
 		
 		similar = sorted(similar, reverse=False)
 		cluster_info_str = ''
 		if selection:
-			if (float(similar[0][:4]) < min_dist_thres) and (float(similar[-1][:4]) < max_dist_thres) and ((float(similar[0][:4])+0.5) > float(similar[-1][:4])): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+0.5) > similar_tuple_list[-1][0]): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
-				cluster_bigram_cntr = Counter()
+				
 				for txt in tweetsDF[tok_result_col].values[similar_indices]:
 					cluster_bigram_cntr.update(get_uni_bigrams(txt)) #regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
 					#cluster_bigram_cntr.update(txt.split()) # unigrams
+				frequency = reverse_index_frequency(cluster_bigram_cntr)
 				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
 				if len(topterms) < 2:
 					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
 				cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
 
 				cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
-					
+				
 				if len(similar)>20:
 					cluster_info_str+='First 10 documents:\n'
 					cluster_info_str+= "\n".join(similar[:10]) + "\n"
@@ -435,6 +446,9 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 				cluster_bigram_cntr = Counter()
 				for txt in tweetsDF[tok_result_col].values[similar_indices]:
 					cluster_bigram_cntr.update(get_uni_bigrams(txt))
+					
+				frequency = reverse_index_frequency(cluster_bigram_cntr)
+				
 				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
 				if len(topterms) < 2:
 					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
@@ -454,9 +468,11 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 					cluster_info_str+= "\n".join(similar) + "\n"
 		
 		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
-			cluster_str_list.append({'cno':cn, 'cstr':cluster_info_str, 'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
+			cluster_str_list.append({'cno':cn, 'cnoprefix':str(cn)+nameprefix, 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
 
 	return cluster_str_list
+	
+
         
 if __name__ == "__main__":
 	import output

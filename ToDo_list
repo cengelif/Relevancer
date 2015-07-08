@@ -27,4 +27,5 @@ ToDo:
 - implement implicit evaluation: same users/hashtags should be consistently under the same label.
 - cluster users/hashtags based on users/hashtags
 - include summary of a hashtag/user information in the cluster summary. Which information can be useful?
+- treat URL's as one entity, do not extract features from a url. Tag a url as, for example: urlurlurl
 """

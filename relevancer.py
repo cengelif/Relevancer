@@ -52,8 +52,7 @@ logging.basicConfig(filename=args.logfile,
 
 logging.info("Script started")
 
-
-def connect_mongodb(configfile="data/mongodb.ini"):
+def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
 #Config Parser
    config = configparser.ConfigParser()
    config.read(configfile)
@@ -62,7 +61,8 @@ def connect_mongodb(configfile="data/mongodb.ini"):
    client_host = config.get('mongodb', 'client_host')
    client_port = int(config.get('mongodb', 'client_port'))
    db_name = config.get('mongodb', 'db_name')
-   coll_name = config.get('mongodb', 'coll_name')
+   if (coll_name == None):
+      coll_name = config.get('mongodb', 'coll_name')
    if config.has_option('mongodb', 'user_name'):
       user_name = config.get('mongodb', 'user_name')
    if config.has_option('mongodb', 'passwd'):
@@ -80,9 +80,7 @@ def connect_mongodb(configfile="data/mongodb.ini"):
       if ('user_name' in locals()) and ('passwd' in locals()):
          rlvdb.authenticate(user_name, passwd)
       rlvcl = rlvdb[coll_name] #Collection
-      logging.info('Connected to Database')
    except Exception:
-      logging.error("Unexpected error:"+ str(sys.exc_info()))
       sys.exit("Database connection failed!")
       pass
 
@@ -116,7 +114,6 @@ class MLStripper(HTMLParser):
       self.fed.append(d)
    def get_data(self):
       return ''.join(self.fed)
-
 
 class Twtokenizer():
    
@@ -189,18 +186,15 @@ class Twtokenizer():
    
       return tokdf.copy()
 
-
 def strip_tags(html):
    s = MLStripper()
    s.feed(html)
    return s.get_data()
 
-
 def read_json_tweets_file(myjsontweetfile, reqlang='en'):
    ftwits = []
    lang_cntr = Counter()
 
-   
    with open(myjsontweetfile) as jfile:
       for i, ln in enumerate(jfile):
 
@@ -253,13 +247,11 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 
       return ftwits
 
-
 def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
    ftwits = []
    lang_cntr = Counter()
-   
-   print(mongo_query)
-   
+
+      
    for i, t in enumerate(rlvcl.find(mongo_query)):
       
       if i == tweet_count: # restrict line numbers for test
@@ -354,8 +346,6 @@ def tok_results(tweetsDF):
 
       print("Tweets are tokenized.")
    else: # do not change the text col
-      
-      
       tok_result_lower_col = "texttok"
       tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
 
@@ -372,7 +362,7 @@ def tok_results(tweetsDF):
       
    return results
    
-def get_uni_bigrams(text, token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"):
+def get_uni_bigrams(text, token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
    
    token_list = re.findall(token_pattern, text)
    
@@ -382,7 +372,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 
    freqcutoff = int(m.log(len(tweetsDF))/2)
    
-   my_token_pattern=r"\b\w+\b|[\U00010000-\U0010ffff]"
+   my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
    
    word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
    text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
@@ -408,7 +398,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
       similar = []
       for i in similar_indices:
          dist = sp.linalg.norm((km.cluster_centers_[cn] - doc_feat_mtrx[i]))
-         similar.append(str(dist) + "   " + tweetsDF['id_str'].values[i]+"   "+ tweetsDF[tok_result_col].values[i])
+         similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
       
       similar = sorted(similar, reverse=False)
       cluster_info_str = ''
@@ -426,7 +416,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
                continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
             cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
 
-            cluster_info_str+="distance_to_centroid"+"   "+"tweet_id"+"   "+"tweet_text\n"
+            cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
                
             if len(similar)>20:
                cluster_info_str+='First 10 documents:\n'
@@ -450,7 +440,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
                continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
             cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
 
-            cluster_info_str+="distance_to_centroid"+"   "+"tweet_id"+"   "+"tweet_text\n"
+            cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
                
             if len(similar)>20:
                cluster_info_str+='First 10 documents:\n'
@@ -481,7 +471,6 @@ if __name__ == "__main__":
    start_tweet_size = len(tweetsDF)
    print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
 
-
    print("Choose mode of the annotation.")
    
    print("1. relevant vs. irrelevant (default)")
@@ -495,7 +484,6 @@ if __name__ == "__main__":
       mylabels = input("Enter a comma seperated label list:").split(",")
       information_groups = {k:[] for k in mylabels}
       print("Labels are:", [l for l in sorted(list(information_groups.keys()))])
-
 
    identified_tweet_ids = []
    
@@ -589,7 +577,6 @@ if __name__ == "__main__":
       if label_rest_tweets == 'y':
          km, doc_feat_mtrx, word_vectorizer = output.create_clusters(tweetsDF[tok_result_col])
          
-
          for cn, c_str, tw_ids in output.get_candidate_clusters(km, doc_feat_mtrx, word_vectorizer, tweetsDF, tok_result_col, min_dist_thres, max_dist_thres, selection=False):
             #for cn, csize in clustersizes.most_common():
             #   cn = int(cn)

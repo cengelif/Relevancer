@@ -52,36 +52,40 @@ logging.basicConfig(filename=args.logfile,
 
 logging.info("Script started")
 
-def connect_mongodb(configfile="myconfig.ini"):
+def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
 #Config Parser
-	config = configparser.ConfigParser()
-	config.read(configfile)
+   config = configparser.ConfigParser()
+   config.read(configfile)
 
 #MongoLab OAuth;
-	client_host = config.get('mongodb', 'client_host')
-	client_port = int(config.get('mongodb', 'client_port'))
-	db_name = config.get('mongodb', 'db_name')
-	coll_name = config.get('mongodb', 'coll_name')
-	if config.has_option('mongodb', 'user_name'):
-	   user_name = config.get('mongodb', 'user_name')
-	if config.has_option('mongodb', 'passwd'):
-	   passwd = config.get('mongodb', 'passwd')
-	  
-#Connect to database
-	try:
-		connection = pm.MongoClient(client_host, client_port)
-		rlvdb = connection[db_name]  #Database
-		if ('user_name' in locals()) and ('passwd' in locals()):
-			rlvdb.authenticate(user_name, passwd)
-		rlvcl = rlvdb[coll_name] #Collection
-		logging.info('Connected to Database')
-	except Exception:
-		logging.error("Unexpected error:"+ str(sys.exc_info()))
-		sys.exit("Database connection failed!")
-		pass
+   client_host = config.get('mongodb', 'client_host')
+   client_port = int(config.get('mongodb', 'client_port'))
+   db_name = config.get('mongodb', 'db_name')
+   if (coll_name == None):
+      coll_name = config.get('mongodb', 'coll_name')
+   if config.has_option('mongodb', 'user_name'):
+      user_name = config.get('mongodb', 'user_name')
+   if config.has_option('mongodb', 'passwd'):
+      passwd = config.get('mongodb', 'passwd')
+     
+   # print(client_host, client_port,db_name,coll_name,user_name,passwd)
 
-	return rlvdb, rlvcl
-	
+#Mongo query
+   #mongo_query = {} # we may read this from a json file.
+
+#Connect to database
+   try:
+      connection = pm.MongoClient(client_host, client_port)
+      rlvdb = connection[db_name]  #Database
+      if ('user_name' in locals()) and ('passwd' in locals()):
+         rlvdb.authenticate(user_name, passwd)
+      rlvcl = rlvdb[coll_name] #Collection
+   except Exception:
+      sys.exit("Database connection failed!")
+      pass
+
+   return rlvdb, rlvcl
+   
 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.

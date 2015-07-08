@@ -11,6 +11,10 @@ from bson.objectid import ObjectId
 
 collection = 'flood'
 
+
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=200, reqlang='en')
+rlv.logging.info("number of tweets"+str(len(tweetlist)))
+
 rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
 
 # begin = ObjectId('556ba080aaa98a2a661aac31')
@@ -19,6 +23,7 @@ begin = ObjectId('55266b24d202defa22d7d719')
 end = ObjectId('5584043ba023cf5c336ba0cd')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
 tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
+
 	
 tweetsDF = rlv.create_dataframe(tweetlist)
 	
@@ -40,7 +45,14 @@ print("cluster_str", a_cluster['cstr'] )
 
 print("cluster_tweet_ids", a_cluster['twids'] )
 
+print("cluster_freq", a_cluster['rif'] )
+
+print("cluster_prefix", a_cluster['cnoprefix'] )
+
+print("cluster_tuple_list", a_cluster['ctweettuplelist'] )
+
 collection_name = collection + '_clusters'
+
 rlvdb[collection_name].insert(cluster_list)
 
 print("Clusters were written to the collection:", collection_name)

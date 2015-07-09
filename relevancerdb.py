@@ -1,5 +1,9 @@
+# Healthtags
 # 556ba07faaa98a2a661aac29 - 556ba080aaa98a2a661aac31
 # 557f66ff23f6e29a04dafcf5 - 557f670023f6e29a04dafcf7
+
+# Flood
+# 54a48df38a8d5e2e4016a736 - 54a48e078a8d5e2e4016a796
 
 # import argparse
 import relevancer as rlv
@@ -9,15 +13,16 @@ from bson.objectid import ObjectId
 # parser.add_argument('-c', '--collection', type=str, required=True, help='collection name of the tweets')
 # args = parser.parse_args()
 
-collection = 'healthtags_id'
+collection = 'flood'
 
 rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
 
 # begin = ObjectId('556ba080aaa98a2a661aac31')
-begin = ObjectId('55266b24d202defa22d7d719')
+begin = ObjectId('54a48e078a8d5e2e4016a796')
 # end = ObjectId('557f66ff23f6e29a04dafcf5')
 end = ObjectId('5584043ba023cf5c336ba0cd')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
+# tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin}}, tweet_count=3000, reqlang='en')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
 	
 tweetsDF = rlv.create_dataframe(tweetlist)

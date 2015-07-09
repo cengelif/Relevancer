@@ -22,7 +22,7 @@ begin = ObjectId('54a48e078a8d5e2e4016a796')
 # end = ObjectId('557f66ff23f6e29a04dafcf5')
 end = ObjectId('5584043ba023cf5c336ba0cd')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin}}, tweet_count=200000, reqlang='en')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin}}, tweet_count=100000, reqlang='en')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
 	
 tweetsDF = rlv.create_dataframe(tweetlist)

@@ -31,8 +31,8 @@ tok = rlv.tok_results(tweetsDF)
 
 start_tweet_size = len(tweetsDF)
 
-cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-') # those comply to slection criteria
-cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
+cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-', selection=False) # those comply to slection criteria
+# cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
 
 print (len(cluster_list))  
 
@@ -45,7 +45,8 @@ print("cluster_str", a_cluster['cstr'] )
 
 print("cluster_tweet_ids", a_cluster['twids'] )
 
-collection_name = collection + '_clusters'
+# collection_name = collection + '_clusters'
+collection_name = 'healthtags_id_clusters'
 rlvdb[collection_name].insert(cluster_list)
 
 print("Clusters were written to the collection:", collection_name)

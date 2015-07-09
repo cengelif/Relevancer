@@ -9,30 +9,30 @@ from bson.objectid import ObjectId
 # parser.add_argument('-c', '--collection', type=str, required=True, help='collection name of the tweets')
 # args = parser.parse_args()
 
-collection = 'flood'
+collection = 'coll123' # 'flood'
 
-
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=200, reqlang='en')
-rlv.logging.info("number of tweets"+str(len(tweetlist)))
-
-rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
+rlvdb, rlvcl = rlv.connect_mongodb(configfile='myconfig.ini',coll_name=collection)
 
 # begin = ObjectId('556ba080aaa98a2a661aac31')
-begin = ObjectId('55266b24d202defa22d7d719')
+begin = ObjectId('55950fb4d04475ee9867f3a4')
 # end = ObjectId('557f66ff23f6e29a04dafcf5')
-end = ObjectId('5584043ba023cf5c336ba0cd')
+end = ObjectId('55950fc9d04475ee986841c3')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
-
-	
+#tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=600, reqlang='en')
+rlv.logging.info("number of tweets"+str(len(tweetlist)))
+#print(len(tweetlist))	
 tweetsDF = rlv.create_dataframe(tweetlist)
 	
-tok = rlv.tok_results(tweetsDF)
+tok = rlv.tok_results(tweetsDF, elimrt = True)
 
 start_tweet_size = len(tweetsDF)
 rlv.logging.info("\nNumber of the tweets after retweet elimination:"+ str(start_tweet_size))
 
-cluster_list = rlv.create_clusters(tweetsDF) # those comply to slection criteria
+tw_id = rlv.get_tw_id(rlvcl)
+print (len(tw_id))
+
+cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-') # those comply to slection criteria
 cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
 
 print (len(cluster_list))  
@@ -50,6 +50,8 @@ print("cluster_freq", a_cluster['rif'] )
 print("cluster_prefix", a_cluster['cnoprefix'] )
 
 print("cluster_tuple_list", a_cluster['ctweettuplelist'] )
+
+rlv.logging.info('script finished')
 
 collection_name = collection + '_clusters'
 

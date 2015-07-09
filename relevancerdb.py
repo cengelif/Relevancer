@@ -9,7 +9,7 @@ from bson.objectid import ObjectId
 # parser.add_argument('-c', '--collection', type=str, required=True, help='collection name of the tweets')
 # args = parser.parse_args()
 
-collection = 'flood'
+collection = 'healthtags_id'
 
 rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
 

@@ -478,7 +478,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 					cluster_info_str+= "\n".join(similar) + "\n"
 		
 		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
-			cluster_str_list.append({'cno':cn, 'cnoprefix':str(cn)+nameprefix, 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
+			cluster_str_list.append({'cno':cn, 'cnoprefix':nameprefix+str(cn), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
 
 	return cluster_str_list
 	

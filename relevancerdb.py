@@ -17,8 +17,8 @@ rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
 begin = ObjectId('55266b24d202defa22d7d719')
 # end = ObjectId('557f66ff23f6e29a04dafcf5')
 end = ObjectId('5584043ba023cf5c336ba0cd')
-# tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
+# tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
 	
 tweetsDF = rlv.create_dataframe(tweetlist)
 	
@@ -26,7 +26,7 @@ tok = rlv.tok_results(tweetsDF)
 
 start_tweet_size = len(tweetsDF)
 
-cluster_list = rlv.create_clusters(tweetsDF) # those comply to slection criteria
+cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-') # those comply to slection criteria
 cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
 
 print (len(cluster_list))  

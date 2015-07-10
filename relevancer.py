@@ -339,18 +339,6 @@ def get_tw_ids(rlvcl):
 		break
 	return tw_id_list
 	
-'''def get_annotation(tw_id):
-
-	annotation_list = []
-	annotation_collection = 'anno_coll'
-		
-	for k, anno_ids in tw_id:
-	
-		
-			
-	return annotation_list'''
-
-		
 def get_cluster_sizes(kmeans_result, doclist):
 	clust_len_cntr = Counter()
 	for l in set(kmeans_result.labels_):

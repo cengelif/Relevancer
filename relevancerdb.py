@@ -19,7 +19,8 @@ begin = ObjectId('55950fb4d04475ee9867f3a4')
 end = ObjectId('55950fc9d04475ee986841c3')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
 #tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=600, reqlang='en')
+#tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=10000, reqlang='en')
+tweetlist = rlv.read_json_tweet_fields_database(rlvcl, mongo_query=({'_id': {'$gte': begin, '$lte': end},'lang':'en'}), tweet_count=19000)
 rlv.logging.info("number of tweets"+str(len(tweetlist)))
 #print(len(tweetlist))	
 tweetsDF = rlv.create_dataframe(tweetlist)
@@ -29,7 +30,7 @@ tok = rlv.tok_results(tweetsDF, elimrt = True)
 start_tweet_size = len(tweetsDF)
 rlv.logging.info("\nNumber of the tweets after retweet elimination:"+ str(start_tweet_size))
 
-tw_id = rlv.get_tw_id(rlvcl)
+tw_id = rlv.get_tw_ids(rlvcl)
 print (len(tw_id))
 
 cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-') # those comply to slection criteria
@@ -51,7 +52,7 @@ print("cluster_prefix", a_cluster['cnoprefix'] )
 
 print("cluster_tuple_list", a_cluster['ctweettuplelist'] )
 
-rlv.logging.info('script finished')
+rlv.logging.info('\nscript finished')
 
 collection_name = collection + '_clusters'
 

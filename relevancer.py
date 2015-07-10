@@ -48,7 +48,7 @@ logging.basicConfig(filename=args.logfile,
                             datefmt='%d-%m-%Y, %H:%M',
                             level=logging.INFO)
 
-logging.info("Script started")
+logging.info("\nScript started")
 
 def connect_mongodb(configfile="mongodb.ini", coll_name=None):
 #Config Parser
@@ -303,17 +303,53 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 
 	return ftwits
 	
-def get_tw_id(rlvcl):
+def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1):
+	ftwits = []
+	
+	time = datetime.datetime.now()
+	logging.info("reading_fields_started_at: " + str(time))
 
-	tw_id_list = []
+	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0 })):
 		
-	for clstr in rlvcl.find ({}, {"id_str" : 2}):
+		if i == tweet_count: # restrict line numbers for test
+			break
+		
+		if "retweeted_status" in t:
+			t["is_retweet"] = True
+		else:
+			t["is_retweet"] = False
+		
+		ftwits.append(t)#.splitlines()
+
+	return ftwits
+
+		
+def get_tw_ids(rlvcl):
+	print('In get_tw_ids')
+	tw_id_list = []
+	
+	time1 = datetime.datetime.now()
+	logging.info("get_tw_ids_started_at: " + str(time1))
+		
+	for clstr in rlvcl.find ({}, {"id_str" : 1, "_id":0}):
 	
 		print("cluster from rlvcl:\n",clstr)
 		
-		tw_id_list.append(clstr)
+		tw_id_list.append(clstr["id_str"])
 		break
 	return tw_id_list
+	
+'''def get_annotation(tw_id):
+
+	annotation_list = []
+	annotation_collection = 'anno_coll'
+		
+	for k, anno_ids in tw_id:
+	
+		
+			
+	return annotation_list'''
+
 		
 def get_cluster_sizes(kmeans_result, doclist):
 	clust_len_cntr = Counter()
@@ -328,8 +364,11 @@ def create_dataframe(tweetlist):
 	
 	logging.info("columns:"+str(dataframe.columns))
 	print(len(dataframe))
-	dataframe.set_index("created_at", inplace=True)
-	dataframe.sort_index(inplace=True)
+	if "created_at" in dataframe.columns:
+		dataframe.set_index("created_at", inplace=True)
+		dataframe.sort_index(inplace=True)
+	else:
+		logging.info("There is not the field created_at, continue without datetime index.")
 
 	logging.info("Number of the tweets:"+str(len(dataframe)))
 	logging.info("Available attributes of the tweets:"+str(dataframe.columns))
@@ -389,7 +428,7 @@ def reverse_index_frequency(cluster_bigram_cntr):
 	return reverse_index_freq_dict
 
 def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True):
-	
+	print('In create_clusters')
 	cluster_bigram_cntr = Counter()
 	
 	freqcutoff = int(m.log(len(tweetsDF))/2)
@@ -411,12 +450,12 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 	now3 = datetime.datetime.now()
 	logging.info("k-means_started_at: " + str(now3))
 	
-	n_initt = 1 #int(m.log10(len(tweetsDF)))  Having bigger than 1 causes some problems for big data instances.
+	n_initt = 4 #int(m.log10(len(tweetsDF)))  Having bigger than 1 causes some problems for big data instances.
 	now4 = datetime.datetime.now()
 	logging.info("k-means_ended_at: " + str(now4))
 	
 	if len(tweetsDF) < 100000:
-		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) # , n_jobs=16
+		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) #, n_jobs=16
 		logging.info("The data set is small enough to use Kmeans")
 	else: 
 		km = MiniBatchKMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt, batch_size=1000)
@@ -516,7 +555,7 @@ if __name__ == "__main__":
 	
 	tok = tok_results(tweetsDF)
 	
-	tw_id = get_tw_id(tweetlist)
+	tw_id = get_tw_id(rlvcl)
 	
 	start_tweet_size = len(tweetsDF)
 	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)

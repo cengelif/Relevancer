@@ -18,7 +18,7 @@ import re
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import PCA
 from sklearn import metrics
 
@@ -26,10 +26,10 @@ from sklearn import metrics
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
 
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
-#               help='an integer for the accumulator')
+#				   help='an integer for the accumulator')
 #parser.add_argument('--sum', dest='accumulate', action='store_const',
-#               const=sum, default=max,
-#               help='sum the integers (default: find the max)')
+#				   const=sum, default=max,
+#				   help='sum the integers (default: find the max)')
 
 
 # Find a way to print the help with the default parameters when the command is: python relevancer --help
@@ -40,8 +40,6 @@ parser.add_argument('-d', '--mongodb', type=str, default='myconfig.ini', action=
 parser.add_argument('-g', '--logfile', type=str, default='myapp.log', action='store', help='provide log file name')
 
 args = parser.parse_args()
-#print (args)
-
 
 #Logging
 logging.basicConfig(filename=args.logfile,
@@ -50,14 +48,15 @@ logging.basicConfig(filename=args.logfile,
                             datefmt='%d-%m-%Y, %H:%M',
                             level=logging.INFO)
 
-logging.info("Script started")
+logging.info("\nScript started")
 
-def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
+def connect_mongodb(configfile="mongodb.ini", coll_name=None):
 #Config Parser
    config = configparser.ConfigParser()
    config.read(configfile)
 
 #MongoLab OAuth;
+
    client_host = config.get('mongodb', 'client_host')
    client_port = int(config.get('mongodb', 'client_port'))
    db_name = config.get('mongodb', 'db_name')
@@ -68,11 +67,6 @@ def connect_mongodb(configfile="data/mongodb.ini", coll_name=None):
    if config.has_option('mongodb', 'passwd'):
       passwd = config.get('mongodb', 'passwd')
      
-   # print(client_host, client_port,db_name,coll_name,user_name,passwd)
-
-#Mongo query
-   #mongo_query = {} # we may read this from a json file.
-
 #Connect to database
    try:
       connection = pm.MongoClient(client_host, client_port)
@@ -195,7 +189,6 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
-	
 	with open(myjsontweetfile) as jfile:
 		for i, ln in enumerate(jfile):
 
@@ -248,18 +241,19 @@ def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 
 		return ftwits
 
-
 def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	ftwits = []
 	lang_cntr = Counter()
 
-		
 	for i, t in enumerate(rlvcl.find(mongo_query)):
+	
+		#time = datetime.datetime.now()
+		#logging.info("reading_database_started_at: " + str(time))
 		
 		if i == tweet_count: # restrict line numbers for test
 			break
-				
-      # t = json.loads(ln)
+		
+	# t = json.loads(ln)
 		lang_cntr[t["lang"]] += 1
 
 		if t["lang"] == reqlang:
@@ -301,10 +295,50 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 													"user_followers","user_following", "coordinates", "is_retweet","device"]}
 			#print(i, end=',')
 			ftwits.append(t2)#.splitlines()
+	
+		#time2 = datetime.datetime.now()
+		#logging.info("reading_database_ended_at: " + str(time2))
+			
 	print("Number of documents per languge:",lang_cntr)
 
 	return ftwits
+	
+def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1):
+	ftwits = []
+	
+	time = datetime.datetime.now()
+	logging.info("reading_fields_started_at: " + str(time))
 
+	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0 })):
+		
+		if i == tweet_count: # restrict line numbers for test
+			break
+		
+		if "retweeted_status" in t:
+			t["is_retweet"] = True
+		else:
+			t["is_retweet"] = False
+		
+		ftwits.append(t)#.splitlines()
+
+	return ftwits
+
+		
+def get_tw_ids(rlvcl):
+	print('In get_tw_ids')
+	tw_id_list = []
+	
+	time1 = datetime.datetime.now()
+	logging.info("get_tw_ids_started_at: " + str(time1))
+		
+	for clstr in rlvcl.find ({}, {"id_str" : 1, "_id":0}):
+	
+		print("cluster from rlvcl:\n",clstr)
+		
+		tw_id_list.append(clstr["id_str"])
+		break
+	return tw_id_list
+	
 def get_cluster_sizes(kmeans_result, doclist):
 	clust_len_cntr = Counter()
 	for l in set(kmeans_result.labels_):
@@ -317,16 +351,19 @@ def create_dataframe(tweetlist):
 	data_cntr = Counter()
 	
 	logging.info("columns:"+str(dataframe.columns))
-	
-	dataframe.set_index("created_at", inplace=True)
-	dataframe.sort_index(inplace=True)
+	print(len(dataframe))
+	if "created_at" in dataframe.columns:
+		dataframe.set_index("created_at", inplace=True)
+		dataframe.sort_index(inplace=True)
+	else:
+		logging.info("There is not the field created_at, continue without datetime index.")
 
 	logging.info("Number of the tweets:"+str(len(dataframe)))
 	logging.info("Available attributes of the tweets:"+str(dataframe.columns))
 	
 	return dataframe
 	
-def tok_results(tweetsDF):
+def tok_results(tweetsDF, elimrt = False):
 	results = []
 	tok_cntr = Counter()
 	
@@ -341,15 +378,8 @@ def tok_results(tweetsDF):
 		print("\ntweet set summary:", tweetsDF.info())
 		print(tweetsDF[tok_result_col][:5])
 
-		rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
-		rtfield = tweetsDF["is_retweet"]==False
-		tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
-		tweetsDF = tweetsDF[tweetsDF.is_notrt]
-
-		print("Tweets are tokenized.")
+		print("Tweets ARE tokenized.")
 	else: # do not change the text col
-		
-		
 		tok_result_lower_col = "texttok"
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
 
@@ -357,12 +387,13 @@ def tok_results(tweetsDF):
 		print("\ntweet set summary:", tweetsDF.info())
 		print(tweetsDF[tok_result_col][:5])
 
+		print("\ntweets are NOT tokenized.")
+	
+	if elimrt:
 		rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
 		rtfield = tweetsDF["is_retweet"]==False
 		tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
 		tweetsDF = tweetsDF[tweetsDF.is_notrt]
-
-		print("\ntweets are NOT tokenized.")
 		
 	return results
 	
@@ -384,22 +415,40 @@ def reverse_index_frequency(cluster_bigram_cntr):
 
 	return reverse_index_freq_dict
 
-def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True):
+def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True):
+	print('In create_clusters')
 	cluster_bigram_cntr = Counter()
 	
 	freqcutoff = int(m.log(len(tweetsDF))/2)
 	
 	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 	
+	now = datetime.datetime.now()
+	logging.info("feature_extraction_started_at: " + str(now))
+	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
 	text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
 	
+	now2 = datetime.datetime.now()
+	logging.info("feature_extraction_ended_at: " + str(now2))
+	
 	doc_feat_mtrx = text_vectors
 		
-	n_clust = int(m.sqrt(len(tweetsDF)))
-	n_initt = int(m.log10(len(tweetsDF)))
+	n_clust = int(m.sqrt(len(tweetsDF))/2)
+	now3 = datetime.datetime.now()
+	logging.info("k-means_started_at: " + str(now3))
 	
-	km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=1000, n_init=n_initt) # , n_jobs=16
+	n_initt = 4 #int(m.log10(len(tweetsDF)))  Having bigger than 1 causes some problems for big data instances.
+	now4 = datetime.datetime.now()
+	logging.info("k-means_ended_at: " + str(now4))
+	
+	if len(tweetsDF) < 100000:
+		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) #, n_jobs=16
+		logging.info("The data set is small enough to use Kmeans")
+	else: 
+		km = MiniBatchKMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt, batch_size=1000)
+		logging.info("The data set is BIG, MiniBatchKMeans is used.")
+	
 	km.fit(doc_feat_mtrx)
 
 	cluster_str_list = []
@@ -423,7 +472,7 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, max_dis
 		similar = sorted(similar, reverse=False)
 		cluster_info_str = ''
 		if selection:
-			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+0.5) > similar_tuple_list[-1][0]): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
@@ -494,6 +543,8 @@ if __name__ == "__main__":
 	
 	tok = tok_results(tweetsDF)
 	
+	tw_id = get_tw_id(rlvcl)
+	
 	start_tweet_size = len(tweetsDF)
 	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
 
@@ -510,7 +561,6 @@ if __name__ == "__main__":
 		mylabels = input("Enter a comma seperated label list:").split(",")
 		information_groups = {k:[] for k in mylabels}
 		print("Labels are:", [l for l in sorted(list(information_groups.keys()))])
-
 
 	identified_tweet_ids = []
 	

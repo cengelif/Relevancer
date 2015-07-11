@@ -15,7 +15,7 @@ from bson.objectid import ObjectId
 
 collection = 'healthtags_big'
 
-rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
+rlvdb, rlvcl = rlv.connect_mongodb(configfile='data/mongodb.ini', coll_name=collection)
 
 # begin = ObjectId('556ba080aaa98a2a661aac31')
 begin = ObjectId('54a48e078a8d5e2e4016a796')

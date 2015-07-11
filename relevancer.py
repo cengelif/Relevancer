@@ -22,7 +22,6 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import PCA
 from sklearn import metrics
 
-
 parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
 
 #parser.add_argument('integers', metavar='N', type=int, nargs='+',
@@ -80,7 +79,6 @@ def connect_mongodb(configfile="mongodb.ini", coll_name=None):
 
    return rlvdb, rlvcl
    
-
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
@@ -303,7 +301,7 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 
 	return ftwits
 	
-def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1):
+def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[]):
 	ftwits = []
 	
 	time = datetime.datetime.now()
@@ -311,20 +309,22 @@ def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1):
 
 	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0 })):
 		
-		if i == tweet_count: # restrict line numbers for test
+		if i != tweet_count and t['id_str'] not in annotated_ids: # restrict line numbers for test
+			#break
+		
+			if "retweeted_status" in t:
+				t["is_retweet"] = True
+			else:
+				t["is_retweet"] = False
+			
+			
+			ftwits.append(t)#.splitlines()
+		elif i == tweet_count:
 			break
-		
-		if "retweeted_status" in t:
-			t["is_retweet"] = True
-		else:
-			t["is_retweet"] = False
-		
-		ftwits.append(t)#.splitlines()
-
+			
 	return ftwits
 
-		
-def get_tw_ids(rlvcl):
+def get_ids_from_tw_collection(rlvcl):
 	print('In get_tw_ids')
 	tw_id_list = []
 	
@@ -333,23 +333,26 @@ def get_tw_ids(rlvcl):
 		
 	for clstr in rlvcl.find ({}, {"id_str" : 1, "_id":0}):
 	
-		print("cluster from rlvcl:\n",clstr)
+		#print("cluster from rlvcl:\n",clstr)
 		
 		tw_id_list.append(clstr["id_str"])
-		break
+		#break
+		
 	return tw_id_list
-	
+
 def get_cluster_sizes(kmeans_result, doclist):
+
 	clust_len_cntr = Counter()
+
 	for l in set(kmeans_result.labels_):
 		clust_len_cntr[str(l)] = len(doclist[np.where(kmeans_result.labels_ == l)])
+
 	return clust_len_cntr
 	
 def create_dataframe(tweetlist):
 
 	dataframe = pd.DataFrame(tweetlist)
-	data_cntr = Counter()
-	
+		
 	logging.info("columns:"+str(dataframe.columns))
 	print(len(dataframe))
 	if "created_at" in dataframe.columns:
@@ -365,8 +368,7 @@ def create_dataframe(tweetlist):
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []
-	tok_cntr = Counter()
-	
+		
 	if args.tok: # create a function for that step!
 
 		tok_result_lower_col = "texttok"
@@ -415,7 +417,7 @@ def reverse_index_frequency(cluster_bigram_cntr):
 
 	return reverse_index_freq_dict
 
-def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True):
+def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True, strout = False):
 	print('In create_clusters')
 	cluster_bigram_cntr = Counter()
 	
@@ -428,11 +430,13 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
 	text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
+	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
+	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
 	
 	now2 = datetime.datetime.now()
 	logging.info("feature_extraction_ended_at: " + str(now2))
-	
-	doc_feat_mtrx = text_vectors
+	now4 = datetime.datetime.now()
+	logging.info("k-means_ended_at: " + str(now4))
 		
 	n_clust = int(m.sqrt(len(tweetsDF))/2)
 	now3 = datetime.datetime.now()
@@ -449,13 +453,12 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 		km = MiniBatchKMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt, batch_size=1000)
 		logging.info("The data set is BIG, MiniBatchKMeans is used.")
 	
-	km.fit(doc_feat_mtrx)
+	km.fit(text_vectors)
 
 	cluster_str_list = []
 	#Cluster = namedtuple('Cluster', ['cno', 'cstr','tw_ids'])
 
 	clustersizes = get_cluster_sizes(km, tweetsDF[tok_result_col].values)
-	
 	
 	for cn, csize in clustersizes.most_common():#range(args.ksize):#clustersizes.most_common():
 		cn = int(cn)
@@ -465,40 +468,45 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 		similar = []
 		similar_tuple_list = []
 		for i in similar_indices:
-			dist = sp.linalg.norm((km.cluster_centers_[cn] - doc_feat_mtrx[i]))
-			similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
 			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]))
+			if strout:
+				similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+		if strout:	
+			similar = sorted(similar, reverse=False)
 		
-		similar = sorted(similar, reverse=False)
+		now5 = datetime.datetime.now()
+		logging.info("processing_data_at: " + str(now5))	
+		
 		cluster_info_str = ''
 		if selection:
 			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
-				
 				for txt in tweetsDF[tok_result_col].values[similar_indices]:
 					cluster_bigram_cntr.update(get_uni_bigrams(txt)) #regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
 					#cluster_bigram_cntr.update(txt.split()) # unigrams
 				frequency = reverse_index_frequency(cluster_bigram_cntr)
-				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
-				if len(topterms) < 2:
-					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
-				cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
-
-				cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
 				
-				if len(similar)>20:
-					cluster_info_str+='First 10 documents:\n'
-					cluster_info_str+= "\n".join(similar[:10]) + "\n"
-					#print(*similar[:10], sep='\n', end='\n')
-
-					cluster_info_str+='Last 10 documents:\n'
-					cluster_info_str+= "\n".join(similar[-10:]) + "\n"
-				else:
-					cluster_info_str+="Tweets for this cluster are:\n"
-					cluster_info_str+= "\n".join(similar) + "\n"
+				if strout:
+					topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
+					cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
 				
+				if strout:
+					cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
+					
+					if len(similar)>20:
+						cluster_info_str+='First 10 documents:\n'
+						cluster_info_str+= "\n".join(similar[:10]) + "\n"
+						#print(*similar[:10], sep='\n', end='\n')
+
+						cluster_info_str+='Last 10 documents:\n'
+						cluster_info_str+= "\n".join(similar[-10:]) + "\n"
+					else:
+						cluster_info_str+="Tweets for this cluster are:\n"
+						cluster_info_str+= "\n".join(similar) + "\n"
+					
 		else:
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
@@ -508,31 +516,29 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 					
 				frequency = reverse_index_frequency(cluster_bigram_cntr)
 				
-				topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
-				if len(topterms) < 2:
-					continue # a term with unknown words, due to frequency threshold, may cause a cluster. We want analyze this tweets one unknown terms became known as the freq. threshold decrease.
-				cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
+				if strout:
+					topterms = [k+":"+str(v) for k,v in cluster_bigram_cntr.most_common() if k in word_vectorizer.get_feature_names()]  
+					cluster_info_str+="Top terms are:"+", ".join(topterms) + "\n"
 
-				cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
-					
-				if len(similar)>20:
-					cluster_info_str+='First 10 documents:\n'
-					cluster_info_str+= "\n".join(similar[:10]) + "\n"
-					#print(*similar[:10], sep='\n', end='\n')
+				
+				if strout:
+					cluster_info_str+="distance_to_centroid"+"\t"+"tweet_id"+"\t"+"tweet_text\n"
+					if len(similar)>20:
+						cluster_info_str+='First 10 documents:\n'
+						cluster_info_str+= "\n".join(similar[:10]) + "\n"
+						#print(*similar[:10], sep='\n', end='\n')
 
-					cluster_info_str+='Last 10 documents:\n'
-					cluster_info_str+= "\n".join(similar[-10:]) + "\n"
-				else:
-					cluster_info_str+="Tweets for this cluster are:\n"
-					cluster_info_str+= "\n".join(similar) + "\n"
+						cluster_info_str+='Last 10 documents:\n'
+						cluster_info_str+= "\n".join(similar[-10:]) + "\n"
+					else:
+						cluster_info_str+="Tweets for this cluster are:\n"
+						cluster_info_str+= "\n".join(similar) + "\n"
 		
 		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
 			cluster_str_list.append({'cno':cn, 'cnoprefix':nameprefix+str(cn), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
 
 	return cluster_str_list
 	
-
-        
 if __name__ == "__main__":
 	import output
 	
@@ -634,7 +640,6 @@ if __name__ == "__main__":
 		tweetsDF = tweetsDF[~tweetsDF.id_str.isin(identified_tweet_ids)]
 
 		print('number of remaining tweets to be identified:', len(tweetsDF))
-
 
 		print('current labeled ratio is:', len(identified_tweet_ids)/len(tweetsDF))
 		print('target labeling ratio is:', target_labeling_ratio)

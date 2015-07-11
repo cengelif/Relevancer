@@ -13,7 +13,7 @@ from bson.objectid import ObjectId
 # parser.add_argument('-c', '--collection', type=str, required=True, help='collection name of the tweets')
 # args = parser.parse_args()
 
-collection = 'healthtags_small'
+collection = 'healthtags_big'
 
 rlvdb, rlvcl = rlv.connect_mongodb(coll_name=collection)
 
@@ -22,20 +22,24 @@ begin = ObjectId('54a48e078a8d5e2e4016a796')
 # end = ObjectId('557f66ff23f6e29a04dafcf5')
 end = ObjectId('5584043ba023cf5c336ba0cd')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=3000, reqlang='en')
-tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin}}, tweet_count=50000, reqlang='in')
-# tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
-	
+# tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin}}, tweet_count=50000, reqlang='in')
+tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=500000, reqlang='en')
+rlv.logging.info("number of tweets"+str(len(tweetlist)))
+#print(len(tweetlist))	
 tweetsDF = rlv.create_dataframe(tweetlist)
 	
-tok = rlv.tok_results(tweetsDF)
+tok = rlv.tok_results(tweetsDF, elimrt = True)
 
 start_tweet_size = len(tweetsDF)
+rlv.logging.info("\nNumber of the tweets after retweet elimination:"+ str(start_tweet_size))
 
-cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-', selection=False) # those comply to slection criteria
+tw_id = rlv.get_tw_ids(rlvcl)
+print (len(tw_id))
+
+cluster_list = rlv.create_clusters(tweetsDF, nameprefix='1-') # those comply to slection criteria
 # cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
 
 print (len(cluster_list))  
-
 
 a_cluster = cluster_list[0]
 
@@ -45,12 +49,17 @@ print("cluster_str", a_cluster['cstr'] )
 
 print("cluster_tweet_ids", a_cluster['twids'] )
 
-# collection_name = collection + '_clusters'
-collection_name = 'healthtags_id_clusters'
+print("cluster_freq", a_cluster['rif'] )
+
+print("cluster_prefix", a_cluster['cnoprefix'] )
+
+print("cluster_tuple_list", a_cluster['ctweettuplelist'] )
+
+rlv.logging.info('\nscript finished')
+
+collection_name = collection + '_clusters'
+# collection_name = 'healthtags_id_clusters'
+
 rlvdb[collection_name].insert(cluster_list)
 
 print("Clusters were written to the collection:", collection_name)
-
-
-# After excluding tweets that are annotated, you should do the same iteration as many times as the user would like.
-# You can provide a percentage of annotated tweets to inform about how far is the user in annotation.

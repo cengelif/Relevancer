@@ -440,13 +440,13 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 		
 	n_clust = int(m.sqrt(len(tweetsDF))/2)
 	now3 = datetime.datetime.now()
-	logging.info("k-means_started_at: " + str(now3))
+	logging.info("feature_extraction_ended_at: " + str(now3))
 	
-	n_initt = 4 #int(m.log10(len(tweetsDF)))  Having bigger than 1 causes some problems for big data instances.
+	n_initt = int(m.log10(len(tweetsDF))) # up to 1 million, in KMeans setting, having many iterations is not a problem.
 	now4 = datetime.datetime.now()
 	logging.info("k-means_ended_at: " + str(now4))
 	
-	if len(tweetsDF) < 100000:
+	if len(tweetsDF) < 1000000:
 		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) #, n_jobs=16
 		logging.info("The data set is small enough to use Kmeans")
 	else: 

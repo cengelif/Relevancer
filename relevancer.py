@@ -2,7 +2,7 @@ import configparser
 import sys
 import pymongo as pm
 import logging
-import argparse
+#import argparse
 import json
 import datetime
 import time
@@ -20,30 +20,11 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans, MiniBatchKMeans
-from sklearn.decomposition import PCA
 from sklearn import metrics
-
-parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
-
-#parser.add_argument('integers', metavar='N', type=int, nargs='+',
-#				   help='an integer for the accumulator')
-#parser.add_argument('--sum', dest='accumulate', action='store_const',
-#				   const=sum, default=max,
-#				   help='sum the integers (default: find the max)')
-
-
-# Find a way to print the help with the default parameters when the command is: python relevancer --help
-parser.add_argument('-f', '--infile', type=str, help='input file should contain the microtexts') # format of the file should be defined later.
-parser.add_argument('-l', '--lang', type=str, default='en', action='store', help='language of the microtext that will be selected to be processed further.')
-parser.add_argument('-t', '--tok', type=str, default=False, action='store', help='Should the tweets be tokenized? Default: False')
-parser.add_argument('-d', '--mongodb', type=str, default='myconfig.ini', action='store', help='provide MongoDB credentials')
-parser.add_argument('-g', '--logfile', type=str, default='myapp.log', action='store', help='provide log file name')
-
-args = parser.parse_args()
+#from sklearn.decomposition import PCA
 
 #Logging
-logging.basicConfig(filename=args.logfile,
-                            #filemode='a',
+logging.basicConfig(filename='myapp.log',  
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%d-%m-%Y, %H:%M',
                             level=logging.INFO)
@@ -67,7 +48,8 @@ def connect_mongodb(configfile="mongodb.ini", coll_name=None):
    if config.has_option('mongodb', 'passwd'):
       passwd = config.get('mongodb', 'passwd')
      
-#Connect to database
+#Connect to database;
+
    try:
       connection = pm.MongoClient(client_host, client_port)
       rlvdb = connection[db_name]  #Database
@@ -79,23 +61,23 @@ def connect_mongodb(configfile="mongodb.ini", coll_name=None):
       pass
 
    return rlvdb, rlvcl
-   
+
+#Global variables;
+ 
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+
 result_collection = "relevancer_result"
 
-if args.tok: # create a function for that step!
+my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
+
+no_tok = False  #no_tok by default. 
+
+if no_tok: # create a function for that step!
 	tok_result_col = "texttokCap"
 else:
 	tok_result_col = "text"
-	
-if args.infile is not None:
-	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
-else:
-	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
-
-logging.info("The language to be processed is:"+args.lang)
 
 class MLStripper(HTMLParser):
 	def __init__(self):
@@ -352,13 +334,11 @@ def get_annotated_tweets(collection_name):
 	"""
 	return None
 
-def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df):
+def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern):
 	print('In get_mnb_classifier:')
 	cluster_bigram_cntr = Counter()
 	
 	freqcutoff = int(m.log(len(tweets_as_text_label_df))/2)
-	
-	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]" # define it globally
 	
 	now = datetime.datetime.now()
 	logging.info("feature_extraction_started_at: " + str(now))
@@ -373,16 +353,16 @@ def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df):
 	now2 = datetime.datetime.now()
 	logging.info("feature_extraction_ended_at: " + str(now2))
 
-	now4 = datetime.datetime.now()
-	logging.info("Training started at: " + str(now4))
+	now3 = datetime.datetime.now()
+	logging.info("Training started at: " + str(now3))
 	
 	y_train=tweets_as_text_label_df.label.values
 	
 	MNB = MultinomialNB(alpha=.1)
 	MNB.fit(X2_train, y_train)
 
-	now5 = datetime.datetime.now()
-	logging.info("Training ended at: " + str(now5))
+	now4 = datetime.datetime.now()
+	logging.info("Training ended at: " + str(now4))
 
 	return word_vectorizer, MNB
 
@@ -415,10 +395,10 @@ def create_dataframe(tweetlist):
 def tok_results(tweetsDF, elimrt = False):
 	results = []
 		
-	if args.tok: # create a function for that step!
+	if no_tok: # create a function for that step!
 
 		tok_result_lower_col = "texttok"
-
+		
 		twtknzr = Twtokenizer()
 		tweetsDF = twtknzr.tokenize_df(tweetsDF, texcol='text', rescol=tok_result_col, addLowerTok=False)
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
@@ -427,10 +407,12 @@ def tok_results(tweetsDF, elimrt = False):
 		print(tweetsDF[tok_result_col][:5])
 
 		print("Tweets ARE tokenized.")
+		
 	else: # do not change the text col
+		
 		tok_result_lower_col = "texttok"
+		
 		tweetsDF[tok_result_lower_col] = tweetsDF[tok_result_col].str.lower()
-
 		print("\nAvailable attributes of the tweets:",tweetsDF.columns)
 		print("\ntweet set summary:", tweetsDF.info())
 		print(tweetsDF[tok_result_col][:5])
@@ -438,6 +420,7 @@ def tok_results(tweetsDF, elimrt = False):
 		print("\ntweets are NOT tokenized.")
 	
 	if elimrt:
+	
 		rttext = ~tweetsDF[tok_result_lower_col].str.contains(r"\brt @")
 		rtfield = tweetsDF["is_retweet"]==False
 		tweetsDF["is_notrt"] = rtfield.values & rttext.values # The default setting is to eliminate retweets
@@ -445,7 +428,7 @@ def tok_results(tweetsDF, elimrt = False):
 		
 	return results
 	
-def get_uni_bigrams(text, token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
+def get_uni_bigrams(text, token_pattern = my_token_pattern):
 	
 	token_list = re.findall(token_pattern, text)
 	
@@ -463,35 +446,34 @@ def reverse_index_frequency(cluster_bigram_cntr):
 
 	return reverse_index_freq_dict
 
-def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True, strout = False):
+def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True, strout = False):
 
 	print('In create_clusters')
 	cluster_bigram_cntr = Counter()
 	
 	freqcutoff = int(m.log(len(tweetsDF))/2)
 	
-	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
-	
 	now = datetime.datetime.now()
 	logging.info("feature_extraction_started_at: " + str(now))
 	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern)
 	text_vectors = word_vectorizer.fit_transform(tweetsDF[tok_result_col])
-	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
-	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
+	#logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
+	#logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
 	
 	now2 = datetime.datetime.now()
+	
 	logging.info("feature_extraction_ended_at: " + str(now2))
-	now4 = datetime.datetime.now()
-	logging.info("k-means_ended_at: " + str(now4))
+	now3 = datetime.datetime.now()
+	logging.info("k-means_ended_at: " + str(now3))
 		
 	n_clust = int(m.sqrt(len(tweetsDF))/2)
-	now3 = datetime.datetime.now()
-	logging.info("feature_extraction_ended_at: " + str(now3))
+	now4 = datetime.datetime.now()
+	logging.info("feature_extraction_ended_at: " + str(now4))
 	
 	n_initt = int(m.log10(len(tweetsDF))) # up to 1 million, in KMeans setting, having many iterations is not a problem.
-	now4 = datetime.datetime.now()
-	logging.info("k-means_ended_at: " + str(now4))
+	now5 = datetime.datetime.now()
+	logging.info("k-means_ended_at: " + str(now5))
 	
 	if len(tweetsDF) < 1000000:
 		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) #, n_jobs=16
@@ -507,13 +489,14 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 
 	clustersizes = get_cluster_sizes(km, tweetsDF[tok_result_col].values)
 	
-	for cn, csize in clustersizes.most_common():#range(args.ksize):#clustersizes.most_common():
+	for cn, csize in clustersizes.most_common():  #range(args.ksize):
 		cn = int(cn)
 					
 		similar_indices = (km.labels_== cn).nonzero()[0]
 			
 		similar = []
 		similar_tuple_list = []
+		
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
 			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]))
@@ -522,12 +505,13 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 		if strout:	
 			similar = sorted(similar, reverse=False)
 		
-		now5 = datetime.datetime.now()
-		logging.info("processing_data_at: " + str(now5))	
+		#now6 = datetime.datetime.now()
+		#logging.info("processing_data_at: " + str(now6))	
 		
 		cluster_info_str = ''
+		
 		if selection:
-			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): #  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]):   # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
@@ -589,7 +573,32 @@ def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max
 if __name__ == "__main__":
 	import output
 	
+	#parser = argparse.ArgumentParser(description='Detect information groups in a microtext collection')
+
+	#parser.add_argument('integers', metavar='N', type=int, nargs='+',
+	#				   help='an integer for the accumulator')
+	#parser.add_argument('--sum', dest='accumulate', action='store_const',
+	#				   const=sum, default=max,
+	#				   help='sum the integers (default: find the max)')
+
+	# Find a way to print the help with the default parameters when the command is: python relevancer --help
+	#parser.add_argument('-f', '--infile', type=str, help='input file should contain the microtexts') # format of the file should be defined later.
+	#parser.add_argument('-l', '--lang', type=str, default='en', action='store', help='language of the microtext that will be selected to be processed further.')
+	#parser.add_argument('-t', '--tok', type=str, default=False, action='store', help='Should the tweets be tokenized? Default: False')
+	#parser.add_argument('-d', '--mongodb', type=str, default='myconfig.ini', action='store', help='provide MongoDB credentials')
+	#parser.add_argument('-g', '--logfile', type=str, default='myapp.log', action='store', help='provide log file name')
+
+	#args = parser.parse_args()
+	
+	#if args.infile is not None:
+	#	logging.info("The tweet file is:"+args.infile) # This give None in case there is not a file provided by -f parameter. Be aware! It is not a problem now.
+	#else:
+	#	logging.info("There is not any tweet text file. The default MongoDB configuration file is being read!")
+
+	#logging.info("The language to be processed is:"+args.lang)
+	
 	tweetlist = read_json_tweets_database(args.lang)
+	#tweetlist = read_json_tweets_file(args.lang)  #You need to give a text file.
 	logging.info("number of tweets",len(tweetlist))
 	
 	tweetsDF = create_dataframe(tweetlist)
@@ -599,13 +608,12 @@ if __name__ == "__main__":
 	tw_id = get_tw_id(rlvcl)
 	
 	start_tweet_size = len(tweetsDF)
-	print("\nNumber of the tweets after retweet elimination:", start_tweet_size)
+	print("Number of the tweets after retweet elimination:", start_tweet_size)
 
 	print("Choose mode of the annotation.")
 	
 	print("1. relevant vs. irrelevant (default)")
 	information_groups = {"relevant":[],"irrelevant":[]} # contains IDs of tweets, updated after each clustering/labeling cycle
-
 	print("2. provide a list of labels")
 	print("3. define labels during exploration")
 	mchoice = input("Your choice:")
@@ -695,7 +703,7 @@ if __name__ == "__main__":
 		
 		if len(identified_tweet_ids)/len(tweetsDF) < target_labeling_ratio:
 			print('\nNew clustering will be done to achieve the target.')
-			continue # 
+			continue  
 		else: # else ask the user.
 			iter_choice = input("\nTarget was achieved. Press y if you want to do one more iteration:")
 			if iter_choice == 'y': # if the user enter y, the infinite loop should be continued!

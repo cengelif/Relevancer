@@ -5,6 +5,7 @@ Decisions:
 - if a clustering does not provide any candidate, change the thresholds in the next iteration!
 - change token pattern of TfidfVectorizer! take one character features into account: I, a, ... : Elif did it.
 - Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues as well!
+- For test tweets do the preprocessing via transform() method of tfidfvectorizer not fit_transform().
 
 ToDo:
 - n_clusters, for k should be assigned automatically at the beginning.
@@ -31,4 +32,5 @@ ToDo:
 - Implement processing of text files as a method. Like read_tweets_from_text
 - Write a document file that contains the explanation of methods.
 - Be sure not to make any prediction for tweets that do not contain any feature from the training set. 
+
 """

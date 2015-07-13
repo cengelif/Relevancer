@@ -3,6 +3,8 @@
 
 # import argparse
 import relevancer as rlv
+import pandas as pd
+from sklearn.naive_bayes import MultinomialNB 
 from bson.objectid import ObjectId
 
 # parser = argparse.ArgumentParser(description='Cluster tweets of a certain collection')
@@ -25,6 +27,7 @@ end = ObjectId('55950fc9d04475ee986841c3')
 annotated_tw_ids = ['563657483395530753', '563662532326330370', '563654330041909248', '563654944927281152', '563657924233289728', '563661021559390208', '563651950386757632', '563657164317667328', '563660271810383872', '563662538949160960'] #You should get the actual annotated tweet ids from the annotated tweets collection.
 
 tweetlist = rlv.read_json_tweet_fields_database(rlvcl, mongo_query=({'_id': {'$gte': begin, '$lte': end},'lang':'en'}), tweet_count=10000, annotated_ids=annotated_tw_ids)
+
 rlv.logging.info("number of tweets"+str(len(tweetlist)))
 #print(len(tweetlist))	
 tweetsDF = rlv.create_dataframe(tweetlist)
@@ -69,3 +72,14 @@ print("Clusters were written to the collection:", collection_name)
 
 # After excluding tweets that are annotated, you should do the same iteration as many times as the user would like.
 # You can provide a percentage of annotated tweets to inform about how far is the user in annotation.
+
+tweets_as_text_label_df = pd.DataFrame({'label' : ['relif', 'social'] , 'text' : ["RT @OliverMathenge: Meanwhile, Kenya has donated Sh91 million to Malawi flood victims, according to the Ministry of Foreign Affairs." , "Yow ehyowgiddii! Hahaha thanks sa flood! #instalike http://t.co/mLaTESfunR"]})
+print("tweets_as_text_label_df:", tweets_as_text_label_df)
+
+# get vectorizer and classifier
+vectorizer, mnb_classifier = rlv.get_vectorizer_and_mnb_classifier(tweets_as_text_label_df)
+
+# get label for a new tweet:
+ntw = vectorizer.transform(["Why do you guys keep flooding TL with smear campaign for a candidate you dont like.You think you can actually influnece people's decision?"])
+predictions = mnb_classifier.predict(ntw)
+print("Predictions:", predictions)

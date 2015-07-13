@@ -16,6 +16,7 @@ import scipy as sp
 import re
 
 from pymongo import MongoClient
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans, MiniBatchKMeans
@@ -302,6 +303,7 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	return ftwits
 	
 def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[]):
+
 	ftwits = []
 	
 	time = datetime.datetime.now()
@@ -339,6 +341,50 @@ def get_ids_from_tw_collection(rlvcl):
 		#break
 		
 	return tw_id_list
+
+def get_annotated_tweets(collection_name):
+	"""
+	Dataframe of:
+		text    label 
+		
+		txt1     l1
+		txt2     l2
+	"""
+	return None
+
+def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df):
+	print('In get_mnb_classifier:')
+	cluster_bigram_cntr = Counter()
+	
+	freqcutoff = int(m.log(len(tweets_as_text_label_df))/2)
+	
+	my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]" # define it globally
+	
+	now = datetime.datetime.now()
+	logging.info("feature_extraction_started_at: " + str(now))
+	
+	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
+	X2_train = word_vectorizer.fit_transform(tweets_as_text_label_df.text.values)
+	
+	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
+	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
+	#logging("n_samples: %d, n_features: %d" % X2_train.shape)
+	
+	now2 = datetime.datetime.now()
+	logging.info("feature_extraction_ended_at: " + str(now2))
+
+	now4 = datetime.datetime.now()
+	logging.info("Training started at: " + str(now4))
+	
+	y_train=tweets_as_text_label_df.label.values
+	
+	MNB = MultinomialNB(alpha=.1)
+	MNB.fit(X2_train, y_train)
+
+	now5 = datetime.datetime.now()
+	logging.info("Training ended at: " + str(now5))
+
+	return word_vectorizer, MNB
 
 def get_cluster_sizes(kmeans_result, doclist):
 
@@ -418,6 +464,7 @@ def reverse_index_frequency(cluster_bigram_cntr):
 	return reverse_index_freq_dict
 
 def create_clusters(tweetsDF, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True, strout = False):
+
 	print('In create_clusters')
 	cluster_bigram_cntr = Counter()
 	

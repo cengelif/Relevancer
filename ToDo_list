@@ -32,6 +32,5 @@ ToDo:
 - Implement processing of text files as a method. Like read_tweets_from_text
 - Write a document file that contains the explanation of methods.
 - Be sure not to make any prediction for tweets that do not contain any feature from the training set. 
-- Get a parameter for the MNB file as a pickle.
 - Create IPython notebook as a example of the functiomality.
 """

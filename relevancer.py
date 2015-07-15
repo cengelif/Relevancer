@@ -1,4 +1,5 @@
 import configparser
+import pickle
 import sys
 import pymongo as pm
 import logging
@@ -334,7 +335,7 @@ def get_annotated_tweets(collection_name):
 	"""
 	return None
 
-def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern):
+def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern, pickle_file=None):
 	print('In get_mnb_classifier:')
 	cluster_bigram_cntr = Counter()
 	
@@ -363,8 +364,21 @@ def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern)
 
 	now4 = datetime.datetime.now()
 	logging.info("Training ended at: " + str(now4))
+	
+	vect_and_classifier={'vectorizer' : word_vectorizer, 'classifier' : MNB}
+	
+	if (pickle_file is not None) and isinstance(pickle_file, str) :
+		if not pickle_file.endswith(".pickle"):
+			pickle_file += '.pickle'	
+		with open(pickle_file, 'wb') as f:
+        		pickle.dump(vect_and_classifier, f, pickle.HIGHEST_PROTOCOL)
+        		print("Pickle file was written to", pickle_file)
+	else:
+		print("The pickle file is not a string. It was not written to a pickle file.")
+	
+	return vect_and_classifier
+	
 
-	return word_vectorizer, MNB
 
 def get_cluster_sizes(kmeans_result, doclist):
 

@@ -6,9 +6,10 @@ Decisions:
 - change token pattern of TfidfVectorizer! take one character features into account: I, a, ... : Elif did it.
 - Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues as well!
 - For test tweets do the preprocessing via transform() method of tfidfvectorizer not fit_transform().
+- n_clusters, for k should be assigned automatically at the beginning.
+
 
 ToDo:
-- n_clusters, for k should be assigned automatically at the beginning.
 - silhouette score can be provided with an explanation.
 - Write each group to files.
 - while writing to the file: write remaining tweets as "rest".
@@ -19,7 +20,6 @@ ToDo:
 - put an option to go out of the complete iteration. Currently q quits only from the current iteration.
 - What should we do with the last batch of the clusters after we group majority of the tweets?
 - Parallel processing for datasets taht are bigger than n a certain number.
-- Cleaner output: user doesnt need to see the tweet ids or the distance to the centroid.
 - Add possibility to getting online data as input. Think over processing online.
 - If the data is too big, process/annotate a certain amount of it. Read the rest as you have less data in the memory. As you
   have labeled data, you can create a classifier from the labeled data and help the annotator.
@@ -32,5 +32,6 @@ ToDo:
 - Implement processing of text files as a method. Like read_tweets_from_text
 - Write a document file that contains the explanation of methods.
 - Be sure not to make any prediction for tweets that do not contain any feature from the training set. 
-
+- Get a parameter for the MNB file as a pickle.
+- Create IPython notebook as a example of the functiomality.
 """

@@ -65,7 +65,8 @@ tweets_as_text_label_df = pd.DataFrame({'label' : ['relif', 'social'] , 'text' :
 print("tweets_as_text_label_df:", tweets_as_text_label_df)
 
 # get vectorizer and classifier
-vectorizer, mnb_classifier = rlv.get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern)
+vect_and_classifier = rlv.get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern, pickle_file="vectorizer_and_classifier_dict")
+vectorizer, mnb_classifier = vect_and_classifier["vectorizer"], vect_and_classifier["classifier"]
 
 # get label for a new tweet:
 ntw = vectorizer.transform(["Why do you guys keep flooding TL with smear campaign for a candidate you dont like.You think you can actually influnece people's decision?"])

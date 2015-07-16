@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*~
 
 # C extensions
 *.so
@@ -51,7 +52,7 @@ coverage.xml
 *.log
 
 # Sphinx documentation
-docs/_build/
+_build/
 
 # PyBuilder
 target/

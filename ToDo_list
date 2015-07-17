@@ -19,18 +19,18 @@ ToDo:
 - tokenizer should process:  ‘
 - put an option to go out of the complete iteration. Currently q quits only from the current iteration.
 - What should we do with the last batch of the clusters after we group majority of the tweets?
-- Parallel processing for datasets taht are bigger than n a certain number.
+- Parallel processing for datasets that are bigger than n a certain number.
 - Add possibility to getting online data as input. Think over processing online.
 - If the data is too big, process/annotate a certain amount of it. Read the rest as you have less data in the memory. As you
   have labeled data, you can create a classifier from the labeled data and help the annotator.
-- we need to have proper documentation, tests and proper sw package structure (check the project cookie clutter)
+- we need to have tests and proper sw package structure (check the project cookie clutter)
 - how can you verify that the feature extraction step take almost all emoticons into account?
 - implement implicit evaluation: same users/hashtags should be consistently under the same label.
 - cluster users/hashtags based on users/hashtags
 - include summary of a hashtag/user information in the cluster summary. Which information can be useful?
-- treat URL's as one entity, do not extract features from a url. Tag a url as, for example: urlurlurl
+??elif- treat URL's as one entity, do not extract features from a url. Tag a url as, for example: urlurlurl
 - Implement processing of text files as a method. Like read_tweets_from_text
-- Write a document file that contains the explanation of methods.
 - Be sure not to make any prediction for tweets that do not contain any feature from the training set. 
-- Create IPython notebook as a example of the functiomality.
+- Study pandas.
+
 """

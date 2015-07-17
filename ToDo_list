@@ -28,9 +28,10 @@ ToDo:
 - implement implicit evaluation: same users/hashtags should be consistently under the same label.
 - cluster users/hashtags based on users/hashtags
 - include summary of a hashtag/user information in the cluster summary. Which information can be useful?
-??elif- treat URL's as one entity, do not extract features from a url. Tag a url as, for example: urlurlurl
 - Implement processing of text files as a method. Like read_tweets_from_text
 - Be sure not to make any prediction for tweets that do not contain any feature from the training set. 
 - Study pandas.
+- Integrate tweet collecting to relevancer.
+- Resolve conflict of column name difference between tokenized and untokenized text. Column name of the untokenized text is given as a default parameter. That will cause       normalization to be done on untokenized text even at times we want to process tokenized text.
 
 """

@@ -67,6 +67,7 @@ def connect_mongodb(configfile="mongodb.ini", coll_name=None):
 min_dist_thres = 0.65 # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
 max_dist_thres = 0.85 # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
 target_labeling_ratio = 0.5 # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+#user_entropy = 
 
 result_collection = "relevancer_result"
 
@@ -284,16 +285,16 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 
 	return ftwits
 	
-def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[]):
+def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[]):#, annotated_users=[]):
 
 	ftwits = []
 	
 	time = datetime.datetime.now()
 	logging.info("reading_fields_started_at: " + str(time))
 
-	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0 })):
+	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0, 'user': 'screen_name'})):
 		
-		if i != tweet_count and t['id_str'] not in annotated_ids: # restrict line numbers for test
+		if i != tweet_count and t['id_str'] not in annotated_ids: #and t["user"]["screen_name"] not in annotated_users: # restrict line numbers for test
 			#break
 		
 			if "retweeted_status" in t:
@@ -350,23 +351,17 @@ def create_dataframe(tweetlist):
 	
 	return dataframe
 
-
-#number_re = re.compile(r"\b\d+\b")
-#apost_re = re.compile(r"\'\w+") # replace Ali'ye with Ali ..
 http_re = re.compile(r'https?://[^\s]*')
 
 def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=False):
-   # mytext = re.sub(number_re, '..', mytext)
-    #mytext = re.sub(apost_re, ' ..', mytext)
-    if create_intermediate_result:
-    	mytextDF["normalized"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
-    	mytextDF["active_text"] = mytextDF["normalized"]
-    else:
-    	mytextDF["active_text"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+   
+	if create_intermediate_result:
+		mytextDF["normalized"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+		mytextDF["active_text"] = mytextDF["normalized"]
+	else:
+		mytextDF["active_text"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
     	
-    #mytext = re.sub(http_re, 'urlurlurl', mytext)
-
-    return mytextDF
+	return mytextDF    
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []
@@ -528,9 +523,10 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 		
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
-			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]))
+			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]), tweetsDF['user':'screen_name'].values[i])
 			if strout:
-				similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i])
+				similar.append(str(dist)+"\t"+tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i]+"\t"+tweetsDF['user':'screen_name'].values[i])
+				
 		if strout:	
 			similar = sorted(similar, reverse=False)
 		
@@ -539,8 +535,10 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 		
 		cluster_info_str = ''
 		
+		user_list = [t[0:3] for t in similar_tuple_list]
+		
 		if selection:
-			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]):   # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 
 				cluster_info_str+="cluster number and size are: "+str(cn)+'    '+str(clustersizes[str(cn)]) + "\n"
 					
@@ -595,7 +593,7 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 						cluster_info_str+= "\n".join(similar) + "\n"
 		
 		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
-			cluster_str_list.append({'cno':cn, 'cnoprefix':nameprefix+str(cn), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
+			cluster_str_list.append({'cno':cn, 'user_ent':entropy(user_list), 'cnoprefix':nameprefix+str(cn), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
 
 	return cluster_str_list
 	

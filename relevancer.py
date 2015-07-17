@@ -3,7 +3,6 @@ import pickle
 import sys
 import pymongo as pm
 import logging
-#import argparse
 import json
 import datetime
 import time
@@ -325,61 +324,6 @@ def get_ids_from_tw_collection(rlvcl):
 		
 	return tw_id_list
 
-def get_annotated_tweets(collection_name):
-	"""
-	Dataframe of:
-		text    label 
-		
-		txt1     l1
-		txt2     l2
-	"""
-	return None
-
-def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern, pickle_file=None):
-	print('In get_mnb_classifier:')
-	cluster_bigram_cntr = Counter()
-	
-	freqcutoff = int(m.log(len(tweets_as_text_label_df))/2)
-	
-	now = datetime.datetime.now()
-	logging.info("feature_extraction_started_at: " + str(now))
-	
-	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
-	X2_train = word_vectorizer.fit_transform(tweets_as_text_label_df.text.values)
-	
-	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
-	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
-	#logging("n_samples: %d, n_features: %d" % X2_train.shape)
-	
-	now2 = datetime.datetime.now()
-	logging.info("feature_extraction_ended_at: " + str(now2))
-
-	now3 = datetime.datetime.now()
-	logging.info("Training started at: " + str(now3))
-	
-	y_train=tweets_as_text_label_df.label.values
-	
-	MNB = MultinomialNB(alpha=.1)
-	MNB.fit(X2_train, y_train)
-
-	now4 = datetime.datetime.now()
-	logging.info("Training ended at: " + str(now4))
-	
-	vect_and_classifier={'vectorizer' : word_vectorizer, 'classifier' : MNB}
-	
-	if (pickle_file is not None) and isinstance(pickle_file, str) :
-		if not pickle_file.endswith(".pickle"):
-			pickle_file += '.pickle'	
-		with open(pickle_file, 'wb') as f:
-        		pickle.dump(vect_and_classifier, f, pickle.HIGHEST_PROTOCOL)
-        		print("Pickle file was written to", pickle_file)
-	else:
-		print("The pickle file is not a string. It was not written to a pickle file.")
-	
-	return vect_and_classifier
-	
-
-
 def get_cluster_sizes(kmeans_result, doclist):
 
 	clust_len_cntr = Counter()
@@ -405,6 +349,24 @@ def create_dataframe(tweetlist):
 	logging.info("Available attributes of the tweets:"+str(dataframe.columns))
 	
 	return dataframe
+
+
+#number_re = re.compile(r"\b\d+\b")
+#apost_re = re.compile(r"\'\w+") # replace Ali'ye with Ali ..
+http_re = re.compile(r'https?://[^\s]*')
+
+def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=False):
+   # mytext = re.sub(number_re, '..', mytext)
+    #mytext = re.sub(apost_re, ' ..', mytext)
+    if create_intermediate_result:
+    	mytextDF["normalized"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+    	mytextDF["active_text"] = mytextDF["normalized"]
+    else:
+    	mytextDF["active_text"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+    	
+    #mytext = re.sub(http_re, 'urlurlurl', mytext)
+
+    return mytextDF
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []
@@ -459,6 +421,59 @@ def reverse_index_frequency(cluster_bigram_cntr):
 		reverse_index_freq_dict[str(freq)].append(k)
 
 	return reverse_index_freq_dict
+	
+def get_annotated_tweets(collection_name):
+	"""
+	Dataframe of:
+		text    label 
+		
+		txt1     l1
+		txt2     l2
+	"""
+	return None
+	
+def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern, pickle_file=None):
+	print('In get_mnb_classifier:')
+	cluster_bigram_cntr = Counter()
+	
+	freqcutoff = int(m.log(len(tweets_as_text_label_df))/2)
+	
+	now = datetime.datetime.now()
+	logging.info("feature_extraction_started_at: " + str(now))
+	
+	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
+	X2_train = word_vectorizer.fit_transform(tweets_as_text_label_df.text.values)
+	
+	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
+	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
+	#logging("n_samples: %d, n_features: %d" % X2_train.shape)
+	
+	now2 = datetime.datetime.now()
+	logging.info("feature_extraction_ended_at: " + str(now2))
+
+	now3 = datetime.datetime.now()
+	logging.info("Training started at: " + str(now3))
+	
+	y_train=tweets_as_text_label_df.label.values
+	
+	MNB = MultinomialNB(alpha=.1)
+	MNB.fit(X2_train, y_train)
+
+	now4 = datetime.datetime.now()
+	logging.info("Training ended at: " + str(now4))
+	
+	vect_and_classifier={'vectorizer' : word_vectorizer, 'classifier' : MNB}
+	
+	if (pickle_file is not None) and isinstance(pickle_file, str) :
+		if not pickle_file.endswith(".pickle"):
+			pickle_file += '.pickle'	
+		with open(pickle_file, 'wb') as f:
+        		pickle.dump(vect_and_classifier, f, pickle.HIGHEST_PROTOCOL)
+        		print("Pickle file was written to", pickle_file)
+	else:
+		print("The pickle file is not a string. It was not written to a pickle file.")
+	
+	return vect_and_classifier
 
 def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, printsize=True, nameprefix='', selection=True, strout = False):
 
@@ -772,3 +787,4 @@ if __name__ == "__main__":
 	rlvdb[result_collection].drop() # be sure to overwrite it! Instead of overwriting, it can be inserted by adding a date and time to this dictionary.
 	rlvdb[result_collection].insert(information_groups)
 	print("The result was written to the collection:", result_collection)
+

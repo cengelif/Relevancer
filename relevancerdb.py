@@ -37,6 +37,13 @@ rlv.logging.info("\nNumber of the tweets after retweet elimination:"+ str(start_
 tw_id_list = rlv.get_ids_from_tw_collection(rlvcl)
 print ("Length of the tweet ids and the first then ids",len(tw_id_list),tw_id_list[:10])
 
+tst_https = tweetsDF[tweetsDF.text.str.contains("https")]#["text"]
+tst_http = tweetsDF[tweetsDF.text.str.contains("http:")]#["text"]
+tstDF = tst_http
+tstDF = rlv.normalize_text(tstDF)
+print(tstDF["text"].iloc[10])
+print("normalization:",tstDF["active_text"].iloc[10])
+
 cluster_list = rlv.create_clusters(tweetsDF, my_token_pattern, nameprefix='1-') # those comply to selection criteria
 #cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.
 print (len(cluster_list))  
@@ -74,3 +81,4 @@ predictions = mnb_classifier.predict(ntw)
 print("Predictions:", predictions)
 
 rlv.logging.info('\nscript finished')
+

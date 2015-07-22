@@ -9,7 +9,7 @@
   "author": "Ron Boortman",
   "repository": {
     "type": "git",
-    "url": "https://github.com/floodtags/.git"
+    "url": "git@github.com:cengelif/Relevancer.git"
   },
   "dependencies": {
     "body-parser": "~1.9.2",

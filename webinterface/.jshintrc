@@ -1,0 +1,22 @@
+{
+   "bitwise": true,
+   "camelcase": true,
+   "eqeqeq": true,
+	"immed": true,
+	"indent": 3,
+   "latedef": true,
+   "newcap": true,
+   "noempty": true,
+   "nonew": true,
+   "quotmark": "single",
+   "undef": true,
+   //"unused": true,
+   "trailing": true,
+   "node": true,
+   "globals": {
+      "$"           : true,
+      "document"    : true,
+      "moment"      : true,
+      "window"      : true
+   }
+}

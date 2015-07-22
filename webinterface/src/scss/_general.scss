@@ -1,0 +1,98 @@
+@include font-face('FuturaCondensedMedium', 'https://www.floodtags.com/fonts/futuracondensedmedium');
+@include font-face('FuturaLtBTLight', 'https://www.floodtags.com/fonts/futuraltbtlight');
+@include font-face('FuturaMedium', 'https://www.floodtags.com/fonts/futuramedium');
+
+$light-blue: rgb(71, 185, 233);
+$dark-blue: rgb(15, 27, 94);
+$mixed-blue: rgb(0, 120, 185);
+$white: rgb(255, 255, 255);
+$active-colour: rgb(0, 120, 160);
+
+$general-margin: 40px;
+$header-height: 45px;
+$small-footer-size: 400px;
+$medium-footer-size: 450px;
+$large-footer-size: 250px;
+
+$condensed-font: 'FuturaCondensedMedium', 'Futura', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+$light-font: 'FuturaLtBTLight', 'Futura', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+$normal-font: 'FuturaMedium', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+$twitter-font: 'Georgia', Serif;
+
+
+html {
+   height: 100%;
+}
+
+body {
+   font-family: $normal-font;
+   height: 100%;
+   position: relative;
+   
+   .content {
+      margin-top: -$header-height;
+      min-height: 100%;
+      
+      @media (max-width: $screen-sm-min) {
+         margin-bottom: -$small-footer-size;
+      }
+      
+      @media (min-width: $screen-sm-min) and (max-width: $screen-md-min) {
+         margin-bottom: -$medium-footer-size;
+      }
+      
+      @media (min-width: $screen-md-min) {
+         margin-bottom: -$large-footer-size;
+      }
+      
+      &:before {
+         content: '';
+         display: block;
+         height: $general-margin + $header-height;
+      }
+      
+      &:after {
+         content: '';
+         display: block;
+         
+         @media (max-width: $screen-sm-min) {
+            height: $small-footer-size + $general-margin;
+         }
+   
+         @media (min-width: $screen-sm-min) and (max-width: $screen-md-min) {
+            height: $medium-footer-size + $general-margin;
+         }
+   
+         @media (min-width: $screen-md-min) {
+            height: $large-footer-size + $general-margin;
+         }
+      }
+   }
+   
+   h1 {
+      color: $mixed-blue;
+      font-family: $condensed-font;
+      
+      &.light {
+         color: $light-blue;
+      }
+   }
+   
+   h2 {
+      color: $light-blue;
+      font-family: $condensed-font;
+      text-align: center;
+      
+      &.dark {
+         color: $mixed-blue;
+      }
+   }
+   
+   h3 { font-family: $condensed-font; }
+   
+   h4 { font-family: $condensed-font; }
+   
+   h5 { font-family: $normal-font; }
+   
+   h6 { font-family: $normal-font; }
+}

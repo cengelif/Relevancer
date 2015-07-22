@@ -1,0 +1,40 @@
+.classify-view.container
+   .progress-container.row
+      .progress-wrapper.sm-12
+         h3 Progress
+         .progress
+            .progress-bar(role='progressbar' aria-valuenow='{{cluster.progress}}' aria-valuemin='0' aria-valuemax='1' ng-style='{width: (cluster.progress * 100) + "%"}')
+               span.sr-only {{cluster.progress * 100}}% Complete
+   .wrapper(ng-show='0 <= cluster.progress && cluster.progress < 1')
+      .classification-container.row
+         form.classes.col.sm-12(ng-submit='sendClassification()')
+            .classes-container(ng-repeat='label in cluster.labels')
+               h3(ng-class='{warning: label.notFilled}')
+                  | {{label.name}} 
+                  span.label.label-warning(ng-if='label.notFilled') This classifier needs a classification before submitting
+               ul.list-unstyled
+                  li.class-option(ng-repeat='class in label.classes')
+                     input.radio(id='{{label.name + "." + class.id}}', type='radio', name='{{label.id}}', value='{{class.id}}', ng-model='$parent.$parent.classification[label.id]')
+                     label(for='{{label.name + "." + class.id}}')
+                        | {{class.title}}
+                        tooltip.icon.glyphicon.glyphicon-info-sign(data-toggle='tooltip', data-placement='top', title='{{class.description}}', ng-if='class.description')
+            .submit-wrapper.text-center
+               button.btn.btn-primary(type='submit', ng-disabled='sendingData') Submit
+      .features-container.row
+         .features-wrapper.col-sm-12
+            h3 Top Features
+            .feature.label.label-primary(ng-repeat='f in cluster.features') {{f}}
+      .classifytags-container.row
+         .left-tags.col-sm-6
+            h3 Top 10 tags
+            ul.list-unstyled
+               li.classifytag(ng-repeat='tag in cluster.tags.top10')
+                  span {{tag.text}}
+         .right-tags.col-sm-6
+            h3 Bottom 10 tags
+            ul.list-unstyled
+               li.classifytag(ng-repeat='tag in cluster.tags.bottom10')
+                  span {{tag.text}}
+   .done-wrapper.text-center(ng-if='cluster.progress && cluster.progress === 1')
+      h3 Everything has been classified
+      p The next cluster will be available within 24 hours

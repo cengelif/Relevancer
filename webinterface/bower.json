@@ -1,0 +1,7 @@
+{
+  "name": "Website-Main",
+  "dependencies": {
+    "bootstrap-sass-official": "~3.2.0",
+    "bourbon": "~4.2.3"
+  }
+}

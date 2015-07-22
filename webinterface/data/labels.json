@@ -1,0 +1,25 @@
+{
+   "indonesia_big_clusters": [
+      {
+         "name": "Who",
+         "id": "source",
+         "classes": [
+            {"title": "From individual about self", "id": "self", "description": "The majority of the tweets are 'self-diagnoses'. E.g. the tweet text show words like 'I have', 'I am' etc. The tweet clearly reflects on one-self."},
+            {"title": "From individual about others", "id": "other", "description": "The majority of tweets are from people talking about others. They include observations of events that lie outside themselves."},
+            {"title": "From organisation", "id": "organisation", "description": "The majority of the tweets seem to come from organisations, such as news stations or NGOs."},
+            {"title": "Mixed sources", "id": "mixed", "description": "It is difficult to say where the majority the tweets comes from. It seems a mix."}
+         ]
+      },
+      {
+         "name": "Disease",
+         "id": "disease",
+         "classes": [
+            {"title": "About Dengue", "id": "dengue", "description": "The majority of the tweets are observations/ reports of one or more dengue cases"},
+            {"title": "Maybe about Dengue (symptoms)", "id": "maybe_dengue", "description": "The majority of the tweets contain indications of one or more dengue cases"},
+            {"title": "About Diarrhea or stomachache", "id": "stomach", "description": "The majority of the tweets contain observations/ reports or symptoms of diarrhea or stomach age"},
+            {"title": "Mixed health", "id": "mixed", "description": "The tweets is a mix of symptoms and diseases, incl. stomach ache, diarrhea and/ or dengue"},
+            {"title": "Not relevant", "id": "unrelavant", "description": "The majority of tweets do not fit any of the classes"}
+         ]
+      }
+   ]
+}

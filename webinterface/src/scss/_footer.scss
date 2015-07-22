@@ -1,0 +1,62 @@
+footer {
+   background: rgb(0, 114, 149);
+   color: $white;
+   width: 100%;
+   
+   @media (max-width: $screen-sm-min) {
+      height: $small-footer-size;
+   }
+   
+   @media (min-width: $screen-sm-min) and (max-width: $screen-md-min) {
+      height: $medium-footer-size;
+   }
+   
+   @media (min-width: $screen-md-min) {
+      height: $large-footer-size;
+   }
+   
+   .footer {
+      margin-top: $general-margin * 1.5;
+   }
+
+   .footer-image {
+      font-size: .8em;
+      line-height: 1.3em !important;
+      margin-bottom: $general-margin;
+
+      img {
+         height: auto;
+         margin-bottom: 15px;
+         width: 75%;
+      }
+   }
+
+   .icon {
+      $icon-size: 20px;
+      height: $icon-size;
+      margin: 0 5px;
+      width: $icon-size;
+   }
+
+   .credentials {
+      margin-top: 3em;
+
+      p {
+         font-size: .8em;
+         padding-bottom: 10px;
+      }
+   }
+
+   li {
+      font-size: .8em;
+      margin: 3px 0;
+   }
+
+   a {
+      color: $white;
+   }
+
+   p {
+      font-size: 1em;
+   }
+}

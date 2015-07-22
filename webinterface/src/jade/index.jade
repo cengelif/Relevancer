@@ -1,0 +1,17 @@
+extend _template
+
+block stylesheets
+   link(rel='stylesheet', href='/css/index.css')
+
+block scripts
+   script(type='text/javascript' src='/js/index.min.js')
+
+block content
+   .container-fluid
+      .row
+         .col-sm-12.col-md-3.col-lg-2
+            .list-group
+               a.list-group-item(ng-href='#/classify/{{c.name}}', ng-class='{active: c.name === currentCollection}', ng-repeat='c in collections') {{c.name}}
+         
+         .coll-sm-12.col-md-9.col-lg-10(ng-view)
+         

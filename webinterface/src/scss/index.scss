@@ -1,0 +1,158 @@
+@import 'settings';
+@import 'bootstrap';
+@import 'bourbon';
+@import 'general';
+@import 'header';
+@import 'footer';
+
+.classify-view {
+   overflow: auto;
+   
+   .progress-container {
+      margin-top: $general-margin;
+      
+      .progress {
+         margin-bottom: 0;
+      }
+      
+      .progress-bar {
+         background: $active-colour;
+      }
+   }
+   
+   .classification-container {
+      padding: 0 0 $general-margin/2;
+      
+      ul {
+         @include align-items(stretch);
+         @include display(flex);
+         @include flex-direction(row);
+         @include justify-content(flex-start);
+         
+         margin: 0;
+         padding: 0;
+      }
+      
+      li {
+         @include flex(1);
+         
+         margin: 0 20px;
+      }
+      
+      .submit-wrapper {
+         margin-top: $general-margin/2;
+      }
+      
+      .warning {
+         color: rgb(240, 173, 78);
+      }
+      
+      .label {
+         font-size: .6em;
+         vertical-align: 5px;
+      }
+      
+      h3 {
+         margin-bottom: -10px;
+      }
+   }
+   
+   $bootstrap-blue: rgb(0, 120, 160);
+   
+   label {
+      border: 1px solid rgb(209, 211, 212);
+      border-radius: 3px;
+      width: 100%;
+      
+      .icon {
+         padding: .8em;
+         position: absolute;
+         right: 0;
+         top: 0;
+      }
+   }
+   
+   .radio:empty {
+      margin-left: -9999px;
+      
+      ~ label {
+         @include user-select();
+         
+         cursor: pointer;
+         float: left;
+         padding: 10px 50px 10px 3.25em;
+         position: relative;
+      }
+      
+      ~ label:before {
+         background: rgb(209, 211, 212);
+         border-radius: 3px 0 0 3px;
+         bottom: 0;
+         content: '';
+         display: block;
+         left: 0;
+         position: absolute;
+         top: 0;
+         width: 2.5em;
+      }
+   }
+   
+   .radio:hover:not(:checked) {
+      ~ label {
+         color: rgb(136, 136, 136);
+      }
+      
+      ~ label:before {
+         color: rgb(194, 194, 194);
+         content: '\2714';
+         padding: .6em 0 0 .9em;
+      }
+   }
+   
+   .radio:checked {
+      ~ label {
+         border-color: lighten($light-blue, 1%);
+         color: darken($bootstrap-blue, 10%);
+      }
+      
+      ~ label:before {
+         background-color: $bootstrap-blue;
+         color: darken($bootstrap-blue, 10%);
+         content: '\2714';
+         padding: .6em 0 0 .9em;
+      }
+   }
+   
+   .radio:focus {
+      ~ label:before {
+         box-shadow: 0 0 0 3px rgb(153, 153, 153);
+      }
+   }
+   
+   .feature {
+      float: left;
+      margin: 0 10px 5px;
+   }
+   
+   $border-properties: 1px solid rgba(230, 230, 230, .8);
+   
+   .left-tags {
+      border-right: $border-properties;
+   }
+   
+   .right-tags {
+      border-left: $border-properties;
+   }
+   
+   .classifytag {
+      span {
+         border: 1px solid rgb(225, 232, 237);
+         border-radius: 6px;
+         box-shadow: 0 3px 12px -10px rgba(0, 0, 0, .75);
+         display: inline-block;
+         font-family: $twitter-font;
+         margin-bottom: 10px;
+         padding: 10px 7px;
+      }
+   }
+}

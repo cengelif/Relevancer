@@ -1,0 +1,28 @@
+doctype
+html(ng-app=appName ? appName : null)
+   head
+      meta(charset='utf-8')
+      meta(name='viewport' content='width=device-width, initial-scale=1.0')
+      title #{title} - FloodTags
+      link(rel='shortcut icon' type='image/x-icon' href='images/favicon3.png')
+      
+      block stylesheets
+      
+      script(type='text/javascript' src='/ref/jquery/jquery.min.js')
+      script(type='text/javascript' src='/ref/bootstrap/javascripts/bootstrap.js')
+      script(type='text/javascript' src='//ajax.googleapis.com/ajax/libs/angularjs/1.4.0/angular.min.js')
+      script(type='text/javascript' src='//ajax.googleapis.com/ajax/libs/angularjs/1.4.0/angular-route.min.js')
+      script(type='text/javascript' src='//ajax.googleapis.com/ajax/libs/angularjs/1.4.0/angular-resource.min.js')
+      block scripts
+      
+      if toClient
+         script window.serverdata = !{JSON.stringify(toClient)};
+      
+      if vars && vars.development
+         script(src='http://localhost:35729/livereload.js?snipver=1')
+         
+   body(ng-controller=appName ? 'MainCtrl' : null)
+      include _header
+      .content
+         block content
+      include _footer

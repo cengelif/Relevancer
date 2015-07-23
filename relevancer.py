@@ -1,4 +1,5 @@
 import configparser
+import scipy
 import pickle
 import sys
 import pymongo as pm
@@ -21,6 +22,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn import metrics
+from scipy.spatial import distance
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.cluster import entropy
+#from scipy.spatial.distance import jaccard
 #from sklearn.decomposition import PCA
 
 #Logging
@@ -285,16 +290,16 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 
 	return ftwits
 	
-def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[]):#, annotated_users=[]):
+def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotated_ids=[], annotated_users=[]):
 
 	ftwits = []
 	
 	time = datetime.datetime.now()
 	logging.info("reading_fields_started_at: " + str(time))
 
-	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0, 'user': 'screen_name'})):
+	for i, t in enumerate(rlvcl.find(mongo_query, { 'text': 1, 'id_str': 1, '_id':0, 'user': 1})):
 		
-		if i != tweet_count and t['id_str'] not in annotated_ids: #and t["user"]["screen_name"] not in annotated_users: # restrict line numbers for test
+		if i != tweet_count and t['id_str'] not in annotated_ids and t["user"]["screen_name"] not in annotated_users: # restrict line numbers for test
 			#break
 		
 			if "retweeted_status" in t:
@@ -302,11 +307,12 @@ def read_json_tweet_fields_database(rlvcl, mongo_query, tweet_count=-1, annotate
 			else:
 				t["is_retweet"] = False
 			
-			
-			ftwits.append(t)#.splitlines()
+			t['screen_name'] = t["user"]['screen_name']
+			t1 = {k:v for k, v in t.items() if k not in ["user"]}
+			ftwits.append(t1)#.splitlines()
 		elif i == tweet_count:
 			break
-			
+	logging.info("end of database read, example tweet:"+str(ftwits[-1]))		
 	return ftwits
 
 def get_ids_from_tw_collection(rlvcl):
@@ -361,7 +367,24 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
 	else:
 		mytextDF["active_text"] = mytextDF[tok_result_col].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
     	
-	return mytextDF    
+	return mytextDF   
+	
+def get_vectorizer_and_distance(mytextDF):
+	logging.info("mytext:"+str(mytextDF["active_text"][:20]))
+	freqcutoff = int(m.log(len(mytextDF))/2)
+	
+	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
+	X2_train = word_vectorizer.fit_transform(mytextDF["active_text"][:20])
+	X2_train = X2_train.toarray()
+	
+	logging.info("features:"+str(word_vectorizer.get_feature_names()))
+	
+	dist = distance.pdist(X2_train, 'jaccard')
+	#dist = distance.pdist(X2_train[:10], 'cosine')
+	z = scipy.spatial.distance.squareform(dist)
+	logging.info("distances:"+str(z)) 
+	
+	return z
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []
@@ -438,7 +461,7 @@ def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern,
 	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
 	X2_train = word_vectorizer.fit_transform(tweets_as_text_label_df.text.values)
-	
+		
 	logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
 	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
 	#logging("n_samples: %d, n_features: %d" % X2_train.shape)
@@ -508,7 +531,7 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 	
 	km.fit(text_vectors)
 
-	cluster_str_list = []
+	cluster_str_list = []#user_entropy = 
 	#Cluster = namedtuple('Cluster', ['cno', 'cstr','tw_ids'])
 
 	clustersizes = get_cluster_sizes(km, tweetsDF[tok_result_col].values)
@@ -523,9 +546,9 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 		
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
-			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i]), tweetsDF['user':'screen_name'].values[i])
+			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i], tweetsDF['screen_name'].values[i])) #, tweetsDF['user':'screen_name'].values[i])
 			if strout:
-				similar.append(str(dist)+"\t"+tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i]+"\t"+tweetsDF['user':'screen_name'].values[i])
+				similar.append(str(dist)+"\t"+tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i] +"\t"+tweetsDF['user':'screen_name'].values[i])
 				
 		if strout:	
 			similar = sorted(similar, reverse=False)
@@ -535,7 +558,7 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 		
 		cluster_info_str = ''
 		
-		user_list = [t[0:3] for t in similar_tuple_list]
+		user_list = [t[3] for t in similar_tuple_list] #
 		
 		if selection:
 			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
@@ -593,7 +616,7 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 						cluster_info_str+= "\n".join(similar) + "\n"
 		
 		if len(cluster_info_str) > 0: # that means there is some information in the cluster.
-			cluster_str_list.append({'cno':cn, 'user_ent':entropy(user_list), 'cnoprefix':nameprefix+str(cn), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)})
+			cluster_str_list.append({'cno':cn, 'cnoprefix':nameprefix+str(cn), 'user_entropy':entropy(user_list), 'rif':frequency, 'cstr':cluster_info_str, 'ctweettuplelist':similar_tuple_list,  'twids':list(tweetsDF[np.in1d(km.labels_,[cn])]["id_str"].values)}) #'user_ent':entropy(user_list),
 
 	return cluster_str_list
 	

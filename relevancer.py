@@ -370,21 +370,73 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
 	return mytextDF   
 	
 def get_vectorizer_and_distance(mytextDF):
-	logging.info("mytext:"+str(mytextDF["active_text"][:20]))
-	freqcutoff = int(m.log(len(mytextDF))/2)
+	active_tweet_df = mytextDF#[:20]
+	logging.info("mytext:"+str(active_tweet_df["active_text"])+"size of mytextdf:"+str(len(active_tweet_df["active_text"])))
+	
+	freqcutoff = int(m.log(len(active_tweet_df))/2)
+	logging.info("freqcutoff:"+str(freqcutoff))
 	
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
-	X2_train = word_vectorizer.fit_transform(mytextDF["active_text"][:20])
+	X2_train = word_vectorizer.fit_transform(active_tweet_df["active_text"])
 	X2_train = X2_train.toarray()
 	
 	logging.info("features:"+str(word_vectorizer.get_feature_names()))
+	logging.info("number of features:"+str(len(word_vectorizer.get_feature_names())))
 	
 	dist = distance.pdist(X2_train, 'jaccard')
 	#dist = distance.pdist(X2_train[:10], 'cosine')
-	z = scipy.spatial.distance.squareform(dist)
-	logging.info("distances:"+str(z)) 
+	dist_matrix = scipy.spatial.distance.squareform(dist)
+	logging.info("distances:"+str(dist_matrix)) 
 	
-	return z
+	similarity_dict = {}
+	for a,b in np.column_stack(np.where(dist_matrix<0.4)):#zip(np.where(overthreshold)[0],np.where(overthreshold)[1]):
+		if a!=b:
+
+			if a not in similarity_dict:
+				similarity_dict[a] = [a] # a is the first member of the group.
+
+			similarity_dict[a].append(b)
+
+	kumeler_tuples = list(set([tuple(sorted(km)) for km in similarity_dict.values()])) # gruptaki her eleman icin bir grup kopyasi var, 1'e indir.
+        
+	kumeler_tuples = sorted(kumeler_tuples, key=len, reverse=True)
+	kumeler_tuples2 = [kumeler_tuples[0]]
+
+	kumelerdeki_haberler = list(kumeler_tuples[0])
+        
+	for kt in kumeler_tuples[1:]:
+		if len(set(kumelerdeki_haberler) & set(kt)) == 0:
+			kumeler_tuples2.append(kt)
+			kumelerdeki_haberler += list(kt)
+
+	print("Kume sayisi 1:", len(kumeler_tuples))
+	print("Kume sayisi 2:", len(kumeler_tuples2))
+
+	tweet_sets = []
+	
+	for i,kt in enumerate(kumeler_tuples2):
+		tweets = []
+            
+		for h_indx in kt:
+			tweets.append(active_tweet_df["active_text"].values[h_indx])
+
+		tweet_sets.append(tweets)
+		logging.info("size of group "+str(i)+':'+str(len(tweets)))
+        
+	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
+	
+	for i,twset in enumerate(tweet_sets):		#this code can eliminate tweets that are only duplicate not near duplicate.
+		seen = set()
+		nonrepeatable = []
+		duplicates = list(set(active_tweet_df["active_text"]))
+		for item in duplicates:
+			if item not in seen:
+				seen.add(item)
+				nonrepeatable.append(item)
+				
+	logging.info("nonrepeatable tweet sets:"+ '\n' + str(nonrepeatable) + '\n\n'+ "size of nonrepeatable:" + str(len(nonrepeatable)))
+			
+	return nonrepeatable
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []
@@ -546,19 +598,16 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 		
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
-			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i], tweetsDF['screen_name'].values[i])) #, tweetsDF['user':'screen_name'].values[i])
+			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[tok_result_col].values[i], tweetsDF['screen_name'].values[i])) 
 			if strout:
 				similar.append(str(dist)+"\t"+tweetsDF['id_str'].values[i]+"\t"+ tweetsDF[tok_result_col].values[i] +"\t"+tweetsDF['user':'screen_name'].values[i])
 				
 		if strout:	
 			similar = sorted(similar, reverse=False)
 		
-		#now6 = datetime.datetime.now()
-		#logging.info("processing_data_at: " + str(now6))	
-		
 		cluster_info_str = ''
 		
-		user_list = [t[3] for t in similar_tuple_list] #
+		user_list = [t[3] for t in similar_tuple_list] #t[3] means the third element in the similar_tuple_list.
 		
 		if selection:
 			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0]+min_max_diff_thres) > similar_tuple_list[-1][0]): # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!

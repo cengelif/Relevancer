@@ -46,7 +46,7 @@ rlv.logging.info("This text overwritten by tokenizer" + str(tstDF["text"]))
 print("normalization:",tstDF["active_text"])#.iloc[10])
 rlv.logging.info("This text overwritten by normalization" + str(tstDF["active_text"]))
 
-find_distance = rlv.get_vectorizer_and_distance(tstDF)
+find_distance = rlv.get_and_eliminate_near_duplicate_tweets(tstDF)
 
 cluster_list = rlv.create_clusters(tweetsDF, my_token_pattern, nameprefix='1-') # those comply to selection criteria
 #cluster_list2 = rlv.create_clusters(tweetsDF, selection=False) # get all clusters. You can consider it at the end.

@@ -369,9 +369,12 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
     	
 	return mytextDF   
 	
-def get_vectorizer_and_distance(mytextDF):
+def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock'):
+	
+	start_time = datetime.datetime.now()	
+	
 	active_tweet_df = mytextDF#[:20]
-	logging.info("mytext:"+str(active_tweet_df["active_text"])+"size of mytextdf:"+str(len(active_tweet_df["active_text"])))
+	logging.info("mytext:"+str(active_tweet_df["active_text"]))
 	
 	freqcutoff = int(m.log(len(active_tweet_df))/2)
 	logging.info("freqcutoff:"+str(freqcutoff))
@@ -383,8 +386,13 @@ def get_vectorizer_and_distance(mytextDF):
 	logging.info("features:"+str(word_vectorizer.get_feature_names()))
 	logging.info("number of features:"+str(len(word_vectorizer.get_feature_names())))
 	
-	dist = distance.pdist(X2_train, 'jaccard')
-	#dist = distance.pdist(X2_train[:10], 'cosine')
+	#dist = distance.pdist(X2_train, 'jaccard')
+	#dist = distance.pdist(X2_train, 'cosine')
+	#dist = distance.pdist(X2_train, 'euclidean')
+	#dist = distance.pdist(X2_train, 'cityblock')
+	
+	dist = distance.pdist(X2_train, d2) # Distances are defined as a parameter in the function " d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock' ". 
+	
 	dist_matrix = scipy.spatial.distance.squareform(dist)
 	logging.info("distances:"+str(dist_matrix)) 
 	
@@ -397,35 +405,35 @@ def get_vectorizer_and_distance(mytextDF):
 
 			similarity_dict[a].append(b)
 
-	kumeler_tuples = list(set([tuple(sorted(km)) for km in similarity_dict.values()])) # gruptaki her eleman icin bir grup kopyasi var, 1'e indir.
+	cluster_tuples = list(set([tuple(sorted(km)) for km in similarity_dict.values()])) # for each element have a group copy in the group , decrease 1.
         
-	kumeler_tuples = sorted(kumeler_tuples, key=len, reverse=True)
-	kumeler_tuples2 = [kumeler_tuples[0]]
+	cluster_tuples = sorted(cluster_tuples, key=len, reverse=True)
+	cluster_tuples2 = [cluster_tuples[0]]
 
-	kumelerdeki_haberler = list(kumeler_tuples[0])
+	tweets_in_cluster = list(cluster_tuples[0])
         
-	for kt in kumeler_tuples[1:]:
-		if len(set(kumelerdeki_haberler) & set(kt)) == 0:
-			kumeler_tuples2.append(kt)
-			kumelerdeki_haberler += list(kt)
+	for ct in cluster_tuples[1:]:
+		if len(set(tweets_in_cluster) & set(ct)) == 0:
+			cluster_tuples2.append(ct)
+			tweets_in_cluster += list(ct)
 
-	print("Kume sayisi 1:", len(kumeler_tuples))
-	print("Kume sayisi 2:", len(kumeler_tuples2))
+	print("Number of cluster 1:", len(cluster_tuples))
+	print("Number of cluster 2:", len(cluster_tuples2))
 
 	tweet_sets = []
 	
-	for i,kt in enumerate(kumeler_tuples2):
+	for i,ct in enumerate(cluster_tuples2):
 		tweets = []
             
-		for h_indx in kt:
-			tweets.append(active_tweet_df["active_text"].values[h_indx])
+		for t_indx in ct:
+			tweets.append(active_tweet_df["active_text"].values[t_indx])
 
 		tweet_sets.append(tweets)
 		logging.info("size of group "+str(i)+':'+str(len(tweets)))
         
 	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
 	
-	for i,twset in enumerate(tweet_sets):		#this code can eliminate tweets that are only duplicate not near duplicate.
+	for i,twset in enumerate(tweet_sets):		#This code can eliminate tweets that are only duplicate not near duplicate.
 		seen = set()
 		nonrepeatable = []
 		duplicates = list(set(active_tweet_df["active_text"]))
@@ -435,6 +443,9 @@ def get_vectorizer_and_distance(mytextDF):
 				nonrepeatable.append(item)
 				
 	logging.info("nonrepeatable tweet sets:"+ '\n' + str(nonrepeatable) + '\n\n'+ "size of nonrepeatable:" + str(len(nonrepeatable)))
+	
+	end_time = datetime.datetime.now()
+	logging.info(str('Duration: {}'.format(end_time - start_time))) # It calculates the processing time.
 			
 	return nonrepeatable
 	

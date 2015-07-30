@@ -25,7 +25,6 @@ from sklearn import metrics
 from scipy.spatial import distance
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.cluster import entropy
-#from scipy.spatial.distance import jaccard
 #from sklearn.decomposition import PCA
 
 #Logging
@@ -371,10 +370,15 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
 	
 def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock'):
 	
-	start_time = datetime.datetime.now()	
+	start_time = datetime.datetime.now()
 	
-	active_tweet_df = mytextDF#[:20]
+	#active_tweet_df = mytextDF#[:20]	
+	
+	rows = np.random.choice(mytextDF.index.values, 10000)  # We choose random data for testing.
+	active_tweet_df = mytextDF.ix[rows]
+	
 	logging.info("mytext:"+str(active_tweet_df["active_text"]))
+	logging.info("\n size of mytext:"+str(len(active_tweet_df["active_text"])))
 	
 	freqcutoff = int(m.log(len(active_tweet_df))/2)
 	logging.info("freqcutoff:"+str(freqcutoff))
@@ -391,13 +395,16 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine',
 	#dist = distance.pdist(X2_train, 'euclidean')
 	#dist = distance.pdist(X2_train, 'cityblock')
 	
-	dist = distance.pdist(X2_train, d2) # Distances are defined as a parameter in the function " d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock' ". 
+	#dist = distance.pdist(X2_train, d4) # Distances are defined as a parameter in the function " d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock' ". 
 	
-	dist_matrix = scipy.spatial.distance.squareform(dist)
-	logging.info("distances:"+str(dist_matrix)) 
+	#dist_matrix = scipy.spatial.distance.squareform(dist)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Jaccard'.
+	#logging.info("distances:"+str(dist_matrix))   # These metrics do not support sparse matrix inputs.
+	
+	dist_matrix = pairwise_distances(X2_train, metric='cosine', n_jobs=1)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and also 'Manhattan'.
+	logging.info("distances:"+str(dist_matrix))  # These metrics support sparse matrix inputs.
 	
 	similarity_dict = {}
-	for a,b in np.column_stack(np.where(dist_matrix<0.4)):#zip(np.where(overthreshold)[0],np.where(overthreshold)[1]):
+	for a,b in np.column_stack(np.where(dist_matrix<0.4)):  #zip(np.where(overthreshold)[0],np.where(overthreshold)[1]):
 		if a!=b:
 
 			if a not in similarity_dict:
@@ -433,7 +440,7 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine',
         
 	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
 	
-	for i,twset in enumerate(tweet_sets):		#This code can eliminate tweets that are only duplicate not near duplicate.
+	for i,twset in enumerate(tweet_sets):	# This code can eliminate tweets that are only duplicate not near duplicate.
 		seen = set()
 		nonrepeatable = []
 		duplicates = list(set(active_tweet_df["active_text"]))
@@ -442,11 +449,18 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine',
 				seen.add(item)
 				nonrepeatable.append(item)
 				
-	logging.info("nonrepeatable tweet sets:"+ '\n' + str(nonrepeatable) + '\n\n'+ "size of nonrepeatable:" + str(len(nonrepeatable)))
+	logging.info("nonrepeatable tweet sets:"+ '\n' + str(nonrepeatable))
+	logging.info("\n size of nonrepeatable:" + str(len(nonrepeatable)))
 	
 	end_time = datetime.datetime.now()
 	logging.info(str('Duration: {}'.format(end_time - start_time))) # It calculates the processing time.
-			
+	
+	eliminated = len(active_tweet_df["active_text"])-len(nonrepeatable)  # It calculates the number of eliminated tweets.
+	logging.info("number of eliminated text:"+str(eliminated))
+	
+	per = (eliminated*100)/(len(active_tweet_df["active_text"]))  # It calculates the number of eliminated tweets as percentage.
+	logging.info("percentage of eliminated tweet is " + str(per))
+	
 	return nonrepeatable
 	
 def tok_results(tweetsDF, elimrt = False):

@@ -504,7 +504,7 @@ def create_clusters(tweetsDF,  my_token_pattern, tok_result_col="text", min_dist
 	now5 = datetime.datetime.now()
 	logging.info("k-means_ended_at: " + str(now5))
 	
-	if len(tweetsDF) < 1000000:
+	if len(tweetsDF) < 10000000:
 		km = KMeans(n_clusters=n_clust, init='k-means++', max_iter=500, n_init=n_initt) #, n_jobs=16
 		logging.info("The data set is small enough to use Kmeans")
 	else: 

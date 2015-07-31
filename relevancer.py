@@ -356,7 +356,7 @@ def create_dataframe(tweetlist):
 	
 	return dataframe
 
-http_re = re.compile(r'https?://[^\s]*')
+http_re = re.compile(r'https?[^\s]*')
 
 def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=False):
    
@@ -368,14 +368,13 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
     	
 	return mytextDF   
 	
-def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock'):
+def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard',  distancemetric2='cosine',  distancemetric3='euclidean',  distancemetric4='cityblock'):
 	
 	start_time = datetime.datetime.now()
 	
 	#active_tweet_df = mytextDF#[:20]	
 	
-	rows = np.random.choice(mytextDF.index.values, 10000)  # We choose random data for testing.
-	active_tweet_df = mytextDF.ix[rows]
+	active_tweet_df = pd.DataFrame(mytextDF.ix[np.random.choice(mytextDF.index.values, 700)])    # We choose random data for testing. 
 	
 	logging.info("mytext:"+str(active_tweet_df["active_text"]))
 	logging.info("\n size of mytext:"+str(len(active_tweet_df["active_text"])))
@@ -390,12 +389,7 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine',
 	logging.info("features:"+str(word_vectorizer.get_feature_names()))
 	logging.info("number of features:"+str(len(word_vectorizer.get_feature_names())))
 	
-	#dist = distance.pdist(X2_train, 'jaccard')
-	#dist = distance.pdist(X2_train, 'cosine')
-	#dist = distance.pdist(X2_train, 'euclidean')
-	#dist = distance.pdist(X2_train, 'cityblock')
-	
-	#dist = distance.pdist(X2_train, d4) # Distances are defined as a parameter in the function " d1='jaccard', d2='cosine', d3='euclidean', d4='cityblock' ". 
+	#dist = distance.pdist(X2_train, distancemetric2) # Distances are defined as a parameter in the function " distancemetric1='jaccard',  distancemetric2='cosine',  distancemetric3='euclidean',  distancemetric4='cityblock' ". 
 	
 	#dist_matrix = scipy.spatial.distance.squareform(dist)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Jaccard'.
 	#logging.info("distances:"+str(dist_matrix))   # These metrics do not support sparse matrix inputs.
@@ -438,30 +432,33 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, d1='jaccard', d2='cosine',
 		tweet_sets.append(tweets)
 		logging.info("size of group "+str(i)+':'+str(len(tweets)))
         
-	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
+	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset[:1]) + "\n" + "\n".join(twset[-1:]) for twset in tweet_sets]))
+	#logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
 	
 	for i,twset in enumerate(tweet_sets):	# This code can eliminate tweets that are only duplicate not near duplicate.
 		seen = set()
-		nonrepeatable = []
+		uniquetweets = []
 		duplicates = list(set(active_tweet_df["active_text"]))
 		for item in duplicates:
 			if item not in seen:
 				seen.add(item)
-				nonrepeatable.append(item)
+				uniquetweets.append(item)
 				
-	logging.info("nonrepeatable tweet sets:"+ '\n' + str(nonrepeatable))
-	logging.info("\n size of nonrepeatable:" + str(len(nonrepeatable)))
+	logging.info("unique tweet sets:"+ '\n' + str(str(uniquetweets[:3]) + str(uniquetweets[-3:])))
+	logging.info("\n size of unique tweets:" + str(len(uniquetweets)))
 	
 	end_time = datetime.datetime.now()
 	logging.info(str('Duration: {}'.format(end_time - start_time))) # It calculates the processing time.
 	
-	eliminated = len(active_tweet_df["active_text"])-len(nonrepeatable)  # It calculates the number of eliminated tweets.
+	eliminated = len(active_tweet_df["active_text"])-len(uniquetweets)  # It calculates the number of eliminated tweets.
 	logging.info("number of eliminated text:"+str(eliminated))
 	
 	per = (eliminated*100)/(len(active_tweet_df["active_text"]))  # It calculates the number of eliminated tweets as percentage.
 	logging.info("percentage of eliminated tweet is " + str(per))
 	
-	return nonrepeatable
+	logging.info("xxxx:"+str(active_tweet_df.info()))
+	
+	return uniquetweets
 	
 def tok_results(tweetsDF, elimrt = False):
 	results = []

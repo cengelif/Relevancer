@@ -356,7 +356,11 @@ def create_dataframe(tweetlist):
 	
 	return dataframe
 
+<<<<<<< HEAD
 http_re=re.compile(r'https?[^\s]*')
+=======
+ http_re = re.compile(r'https?[^\s]*')
+>>>>>>> 4908bad3cbc32a67fe2801975802766e58064e32
 
 def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=False):
    
@@ -399,8 +403,12 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
 	#dist_matrix = scipy.spatial.distance.squareform(dist)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Jaccard'.
 	#logging.info("distances:"+str(dist_matrix))   # These metrics do not support sparse matrix inputs.
 	
+<<<<<<< HEAD
 	logging.info("In scikit-learn pairwise distance, we use different parameters for different distances that are defined in 'allowed_metrics'.")
 	dist_matrix = pairwise_distances(X2_train, metric=distancemetric, n_jobs=1)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Manhattan'.
+=======
+	dist_matrix = pairwise_distances(X2_train, metric=distancemetric2, n_jobs=1)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and also 'Manhattan'.
+>>>>>>> 4908bad3cbc32a67fe2801975802766e58064e32
 	logging.info("distances:"+str(dist_matrix))  # These metrics support sparse matrix inputs.
 	
 	similarity_dict = {}

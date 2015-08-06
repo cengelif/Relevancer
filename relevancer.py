@@ -356,7 +356,7 @@ def create_dataframe(tweetlist):
 	
 	return dataframe
 
-http_re = re.compile(r'https?[^\s]*')
+http_re=re.compile(r'https?[^\s]*')
 
 def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=False):
    
@@ -368,33 +368,39 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
     	
 	return mytextDF   
 	
-def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard',  distancemetric2='cosine',  distancemetric3='euclidean',  distancemetric4='cityblock'):
+def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
 	
 	start_time = datetime.datetime.now()
 	
 	#active_tweet_df = mytextDF#[:20]	
 	
-	active_tweet_df = pd.DataFrame(mytextDF.ix[np.random.choice(mytextDF.index.values, 700)])    # We choose random data for testing. 
-	
+	logging.info("We use 'np.random.choice' method for creating a data frame 'active_tweet_df' that contains random tweets and its parameter is 'mytextDF'.")
+	active_tweet_df = pd.DataFrame(mytextDF.ix[np.random.choice(mytextDF.index.values, 7000)])    # We choose random data for testing. 
 	logging.info("mytext:"+str(active_tweet_df["active_text"]))
 	logging.info("\n size of mytext:"+str(len(active_tweet_df["active_text"])))
 	
 	freqcutoff = int(m.log(len(active_tweet_df))/2)
 	logging.info("freqcutoff:"+str(freqcutoff))
 	
+	logging.info("In 'word_vectorizer' method, we use 'TfidfVectorizer' to get feature names and parameter is 'active_tweet_df['active_text']' .")
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern = my_token_pattern, sublinear_tf=True)
 	X2_train = word_vectorizer.fit_transform(active_tweet_df["active_text"])
 	X2_train = X2_train.toarray()
-	
 	logging.info("features:"+str(word_vectorizer.get_feature_names()))
 	logging.info("number of features:"+str(len(word_vectorizer.get_feature_names())))
+	logging.info("End of the 'word_vectorizer' method.")
 	
-	#dist = distance.pdist(X2_train, distancemetric2) # Distances are defined as a parameter in the function " distancemetric1='jaccard',  distancemetric2='cosine',  distancemetric3='euclidean',  distancemetric4='cityblock' ". 
+	allowed_metrics = ['cosine',  'euclidean', 'cityblock', 'jaccard']
+	if distancemetric not in allowed_metrics:
+		raise Exception("distance metric should be one of the allowed ones. Allowed metrics are: " +str(allowed_metrics))
 	
+	#logging.info("In scipy pairwise distance, we use different parameters for different distances that are defined in 'allowed_metrics'.")
+	#dist = distance.pdist(X2_train, distancemetric2) # Distances are defined as a parameter in the function.
 	#dist_matrix = scipy.spatial.distance.squareform(dist)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Jaccard'.
 	#logging.info("distances:"+str(dist_matrix))   # These metrics do not support sparse matrix inputs.
 	
-	dist_matrix = pairwise_distances(X2_train, metric='cosine', n_jobs=1)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and also 'Manhattan'.
+	logging.info("In scikit-learn pairwise distance, we use different parameters for different distances that are defined in 'allowed_metrics'.")
+	dist_matrix = pairwise_distances(X2_train, metric=distancemetric, n_jobs=1)   # Valid values for metric are 'Cosine', 'Cityblock', 'Euclidean' and 'Manhattan'.
 	logging.info("distances:"+str(dist_matrix))  # These metrics support sparse matrix inputs.
 	
 	similarity_dict = {}
@@ -405,7 +411,8 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard'
 				similarity_dict[a] = [a] # a is the first member of the group.
 
 			similarity_dict[a].append(b)
-
+	
+	#logging.info("Demote the duplicate tweets to 1 'list(set([tuple(sorted(km))'.")
 	cluster_tuples = list(set([tuple(sorted(km)) for km in similarity_dict.values()])) # for each element have a group copy in the group , decrease 1.
         
 	cluster_tuples = sorted(cluster_tuples, key=len, reverse=True)
@@ -420,7 +427,7 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard'
 
 	print("Number of cluster 1:", len(cluster_tuples))
 	print("Number of cluster 2:", len(cluster_tuples2))
-
+	
 	tweet_sets = []
 	
 	for i,ct in enumerate(cluster_tuples2):
@@ -431,9 +438,12 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard'
 
 		tweet_sets.append(tweets)
 		logging.info("size of group "+str(i)+':'+str(len(tweets)))
-        
+		
 	logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset[:1]) + "\n" + "\n".join(twset[-1:]) for twset in tweet_sets]))
 	#logging.info("Near duplicate tweet sets:"+ "\n\n\n".join(["\n".join(twset) for twset in tweet_sets]))
+	
+	#logging.info('End of the 'scipy pairwise distance'.')
+	logging.info('End of the "scikit-learn pairwise distance".')
 	
 	for i,twset in enumerate(tweet_sets):	# This code can eliminate tweets that are only duplicate not near duplicate.
 		seen = set()
@@ -447,8 +457,10 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard'
 	logging.info("unique tweet sets:"+ '\n' + str(str(uniquetweets[:3]) + str(uniquetweets[-3:])))
 	logging.info("\n size of unique tweets:" + str(len(uniquetweets)))
 	
+	logging.info(" 'datetime.datetime.now()' method is used for calculating the process time. ")
 	end_time = datetime.datetime.now()
 	logging.info(str('Duration: {}'.format(end_time - start_time))) # It calculates the processing time.
+	logging.info("end of the datetime.datetime.now() method.")
 	
 	eliminated = len(active_tweet_df["active_text"])-len(uniquetweets)  # It calculates the number of eliminated tweets.
 	logging.info("number of eliminated text:"+str(eliminated))
@@ -456,7 +468,8 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF,  distancemetric1='jaccard'
 	per = (eliminated*100)/(len(active_tweet_df["active_text"]))  # It calculates the number of eliminated tweets as percentage.
 	logging.info("percentage of eliminated tweet is " + str(per))
 	
-	logging.info("xxxx:"+str(active_tweet_df.info()))
+	logging.info("dataframe info:"+str(active_tweet_df.info()))
+	#logging.info("head:"+str(active_tweet_df.head()))
 	
 	return uniquetweets
 	

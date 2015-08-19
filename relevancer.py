@@ -234,7 +234,7 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 			t["user_followers"] = t["user"]["followers_count"]
 			t["user_following"] = t["user"]["friends_count"]
 
-			t2 = {k:v for k,v in t.items() if k in ["entity_type","entity_hashtags","entity_mentions","entity_urls",\
+		t2 = {k:v for k,v in t.items() if k in ["entity_type","entity_hashtags","entity_mentions","entity_urls",\
 													"country","created_at","text","in_reply_to_user_id","id_str","user_id",\
 													"user_followers","user_following", "coordinates", "is_retweet","device"]}
 			# print(i, end=',')

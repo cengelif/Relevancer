@@ -34,5 +34,7 @@ ToDo:
 - Integrate tweet collecting to relevancer.
 - Resolve conflict of column name difference between tokenized and untokenized text. Column name of the untokenized text is given as a default parameter. That will cause normalization to be done on untokenized text even at times we want to process tokenized text.
 - Create timeline of the tweets in a cluster. You may need to include the datetime of the tweet.
+- For more than 10.000 tweets you should use a server to run the script because of this, the matrix that occur in the get_and_eliminate_tweets method needs high memory so local memory is not enough.
+- np.random() process time takes longtime. 
 
 """

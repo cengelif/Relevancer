@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *~
 *.ini
+*.pickle
 
 # C extensions
 *.so

@@ -319,7 +319,7 @@ def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine'):
 
 	start_time = datetime.datetime.now()
 
-	# active_tweet_df = tweetsDF  # [:20]	
+	# active_tweet_df = tweetsDF  	
 
 	logging.info("We use 'np.random.choice' method for creating a data frame 'active_tweet_df' that contains random tweets and its parameter is 'tweetsDF'.")
 	active_tweet_df = pd.DataFrame(tweetsDF.ix[np.random.choice(tweetsDF.index.values, 8100)])    # We choose random data for testing. 

@@ -315,23 +315,23 @@ def normalize_text(mytextDF, tok_result_col="text", create_intermediate_result=F
 
 	return mytextDF   
 
-def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
+def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine'):
 
 	start_time = datetime.datetime.now()
 
-	# active_tweet_df = mytextDF  # [:20]	
+	# active_tweet_df = tweetsDF  # [:20]	
 
-	logging.info("We use 'np.random.choice' method for creating a data frame 'active_tweet_df' that contains random tweets and its parameter is 'mytextDF'.")
-	active_tweet_df = pd.DataFrame(mytextDF.ix[np.random.choice(mytextDF.index.values, 8100)])    # We choose random data for testing. 
-	logging.info("mytext:" + str(active_tweet_df["active_text"]))
-	logging.info("\n size of mytext:" + str(len(active_tweet_df["active_text"])))
+	logging.info("We use 'np.random.choice' method for creating a data frame 'active_tweet_df' that contains random tweets and its parameter is 'tweetsDF'.")
+	active_tweet_df = pd.DataFrame(tweetsDF.ix[np.random.choice(tweetsDF.index.values, 8100)])    # We choose random data for testing. 
+	logging.info("mytext:" + str(active_tweet_df["text"]))
+	logging.info("\n size of mytext:" + str(len(active_tweet_df["text"])))
 
 	freqcutoff = int(m.log(len(active_tweet_df))/2)
 	logging.info("freqcutoff:"+str(freqcutoff))
 
-	logging.info("In 'word_vectorizer' method, we use 'TfidfVectorizer' to get feature names and parameter is 'active_tweet_df['active_text']' .")
+	logging.info("In 'word_vectorizer' method, we use 'TfidfVectorizer' to get feature names and parameter is 'active_tweet_df['text']' .")
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=my_token_pattern, sublinear_tf=True)
-	X2_train = word_vectorizer.fit_transform(active_tweet_df["active_text"])
+	X2_train = word_vectorizer.fit_transform(active_tweet_df["text"])
 	X2_train = X2_train.toarray()
 	logging.info("features:" + str(word_vectorizer.get_feature_names()))
 	logging.info("number of features:" + str(len(word_vectorizer.get_feature_names())))
@@ -374,7 +374,7 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
 	for i, ct in enumerate(cluster_tuples2):
 		tweets = []
 		for t_indx in ct:
-			tweets.append(active_tweet_df["active_text"].values[t_indx])
+			tweets.append(active_tweet_df["text"].values[t_indx])
 		tweet_sets.append(tweets)
 		logging.info("size of group " + str(i) + ':' + str(len(tweets)))
 
@@ -386,7 +386,7 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
 	for i, twset in enumerate(tweet_sets):  # This code can eliminate tweets that are only duplicate not near duplicate.
 		seen = set()
 		uniquetweets = []
-		duplicates = list(set(active_tweet_df["active_text"]))
+		duplicates = list(set(active_tweet_df["text"]))
 		for item in duplicates:
 			if item not in seen:
 				seen.add(item)
@@ -400,10 +400,10 @@ def get_and_eliminate_near_duplicate_tweets(mytextDF, distancemetric='cosine'):
 	logging.info(str('Duration: {}'.format(end_time - start_time)))  # It calculates the processing time.
 	logging.info("end of the datetime.datetime.now() method.")
 
-	eliminated = len(active_tweet_df["active_text"]) - len(uniquetweets)  # It calculates the number of eliminated tweets.
+	eliminated = len(active_tweet_df["text"]) - len(uniquetweets)  # It calculates the number of eliminated tweets.
 	logging.info("number of eliminated text:"+str(eliminated))
 
-	per = (eliminated*100)/(len(active_tweet_df["active_text"]))  # It calculates the number of eliminated tweets as percentage.
+	per = (eliminated*100)/(len(active_tweet_df["text"]))  # It calculates the number of eliminated tweets as percentage.
 	logging.info("percentage of eliminated tweet is " + str(per))
 
 	logging.info("dataframe info:" + str(active_tweet_df.info()))

@@ -4,7 +4,10 @@ __pycache__/
 *~
 *.ini
 *.pickle
+<<<<<<< HEAD
 
+=======
+>>>>>>> ef3b00a8a46fc3727f6480295ebfdef4a4551755
 
 # C extensions
 *.so

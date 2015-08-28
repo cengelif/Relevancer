@@ -9,19 +9,20 @@ from bson.objectid import ObjectId
 
 my_token_pattern = r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 
-collection = 'coll123'  # 'flood'
+collection = 'all_data'  # 'flood'
 
-rlvdb, rlvcl = rlv.connect_mongodb(configfile='myconfig.ini', coll_name=collection)  # Db and the collection that contains the tweet set to be annotated.
+rlvdb, rlvcl = rlv.connect_mongodb(configfile='myalldata.ini', coll_name=collection)  # Db and the collection that contains the tweet set to be annotated.
 
-begin = ObjectId('55950fb4d04475ee9867f3a4')  # 55950fb4d04475ee9867f3a4
-end = ObjectId('55950fc9d04475ee986841c3')  # 55950fc9d04475ee986841c3
+begin = ObjectId('55cd9edc78300a0b48354fbd')  # 55950fb4d04475ee9867f3a4
+end = ObjectId('55d4448aa4c41a84e4a83341')  # 55950fc9d04475ee986841c3
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={}, tweet_count=3000, reqlang='en')
 # tweetlist = rlv.read_json_tweets_database(rlvcl, mongo_query={'_id': {'$gte': begin, '$lte': end}}, tweet_count=10000, reqlang='en')
 
 # This list is just for test.
-annotated_tw_ids = ['563829354258788352', ' 564030861226430464', ' 564013764614168576', '564021392891318274', '563657483395530753', '563654330041909248', ' 563657924233289728', '563651950386757632', '563660271810383872']  # You should get the actual annotated tweet ids from the annotated tweets collection.
+# annotated_tw_ids = ['563829354258788352', ' 564030861226430464', ' 564013764614168576', '564021392891318274', '563657483395530753', '563654330041909248', ' 563657924233289728', '563651950386757632', '563660271810383872']  # You should get the actual annotated tweet ids from the annotated tweets collection.
 
-tweetlist = rlv.read_json_tweet_fields_database(rlvcl, mongo_query=({'_id': {'$gte': begin, '$lte': end}, 'lang': 'en'}), tweet_count=20000, annotated_ids=annotated_tw_ids)
+annotated_tw_ids = ['631754887861112832', ' 631754821859700736', ' 631754771183988737', '631754761595973632', '631754703357906944', '631754719350931456', ' 631754609120387072', '631754601918763008', '632104500573003776']
+tweetlist = rlv.read_json_tweet_fields_database(rlvcl, mongo_query=({'_id': {'$gte': begin, '$lte': end}, 'lang': 'en'}), tweet_count=48524, annotated_ids=annotated_tw_ids)
 
 rlv.logging.info("Number of tweets:" + str(len(tweetlist)))
 # print(len(tweetlist))
@@ -45,7 +46,7 @@ rlv.logging.info("This text overwritten by tokenizer" + str(tstDF["text"]))
 print("normalization:", tstDF["active_text"])  # .iloc[10])
 rlv.logging.info("This text overwritten by normalization" + str(tstDF["active_text"]))
 
-find_distance = rlv.get_and_eliminate_near_duplicate_tweets(tstDF)
+find_distance = rlv.get_and_eliminate_near_duplicate_tweets(tweetsDF)
 
 cluster_list = rlv.create_clusters(tweetsDF, my_token_pattern, nameprefix='1-')  # those comply to selection criteria
 # cluster_list2 = rlv.create_clusters(tweetsDF, selection=False)  # get all clusters. You can consider it at the end.

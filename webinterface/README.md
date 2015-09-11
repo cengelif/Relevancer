@@ -1,4 +1,4 @@
-# Web Interface Relefancer
+# Web Interface Relevancer
 
 This package, created with `NodeJS`, connects to the database of the Relevancer.
 

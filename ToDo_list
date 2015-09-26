@@ -37,4 +37,27 @@ ToDo:
 - For more than 10.000 tweets you should use a server to run the script because of this, the matrix that occur in the get_and_eliminate_tweets method needs high memory so local memory is not enough.
 - np.random() process time takes longtime. 
 
+
+EK:
+
+Do a study on identifying distribution of the distances to the cluster center in the clusters. If first half of the distances focused a lot, ignore the second half. Check
+first %25, second, etc. So the cluster selection can be optimized.
+
+On the web interface put options for: Identify & Show retweets, Identify & Show Near-Duplicates, Upload tweets, Download group 
+
+"dataframe info:None" satırına kontrol gerekiyor.
+
+10 binlik datada "27-08-2015, 14:54,560 root INFO Number of features:56" satire wok az geldi gözüme. Kontrol etmeli. Ki kalan tweet sayısını da yazsak: "The data set is small enough to use Kmeans" civarına.
+
+"In scikit-learn pairwise distance, we use different parameters for different distances that are defined in 'allowed_metrics'." şurada hang parametrelerin kabul edildiğini de yazsak, vey dökümantasyondaki nerve bakılabileceğine referans versek.
+
+"End of the "scikit-learn pairwise distance"." Bunun sonuna hangi ölçütün kullanıldığını yazsak, tam olur.
+
+Neden "number of features" hep, tüm tweet setlerde 56?
+
+RT'ler ve URL'ler tam işlenmiyor gibime geldi. Şu featurelar şüpheli: 'co mLaTESfunR' --> url, 'RT @OliverMathenge' --> RT
+
+User isimlerini de mi normalize etsek, "@cilginTweetci" gibilerini standard bi isme: "xxUserxx" gibi.. Yoksa çok kirlilik oluşturuyorlar sanki.
+
+
 """

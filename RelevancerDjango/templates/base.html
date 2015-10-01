@@ -1,0 +1,50 @@
+{% load staticfiles %}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<link rel="shortcut icon" href="{% static 'favicon' %}" />
+
+<link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
+
+<title>{% block title %}Home - Relevancer{% endblock %}</title>
+
+
+<script type="text/javascript">
+
+{% block ex_script %}{% endblock %}
+
+</script>
+
+
+</head>
+
+<body>
+
+
+	<div style="text-align:center;">
+	
+		<br>	
+	
+		<h1><a href="{% url 'home' %}">Relevancer</a></h1>
+		
+		<br>	
+
+		{% block main %}
+		
+		<h5>Choose one of the clusters available;</h5>
+		
+		<ul>
+			<li><a href="{% url 'cluster' %}">all_data_clusters</a></li>				
+		</ul>			
+
+		{% endblock %}
+
+	</div>
+
+</body>
+
+</html>

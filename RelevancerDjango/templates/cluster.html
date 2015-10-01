@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Cluster - Relevancer{% endblock %}
+
+{% block main %}
+				
+				
+		{% if cluster %}
+	
+				<h3>Top Ten Tweets</h3>
+		
+				<ul>
+						{% for tweets in top10 %}
+								<li>
+										{{ tweets }}	
+								</li>
+						{% endfor %}
+				</ul>
+			
+				<h3>Last Ten Tweets</h3>
+		
+				<ul>
+						{% for tweets in last10 %}
+								<li>
+										{{ tweets }}	
+								</li>
+						{% endfor %}
+				</ul>
+				
+		
+			
+				The labels used before in this cluster : {{ all_labels }}
+		
+				<form method="post" action="{% url 'home' %}">
+						{% csrf_token %}
+						<p>Write a Label</p>
+						<input type="text" name="cl_id" id="datepicker" value="{{ cluster.id }}" placeholder="{{ cluster.id }}" readonly/><br>
+  						<input type="text" name="label" id="datepicker" placeholder="write label here" required/><br>
+  						<input type="submit" name="labeler" value="label">
+ 	 			</form>
+  		
+  				<br>
+  		
+  				<!-- Previous cluster id -->
+  				{{ cl_id }} - {{ label }}
+  				
+  				<br><br>
+	
+
+		{% else %}
+			
+				{{ warning }}
+				
+				{{ hede }}
+				
+				<br><br>
+			
+				All the labels used in this cluster : {{ all_labels }}			
+			
+			
+		{% endif %}	
+
+		{% endblock %}

@@ -63,9 +63,9 @@ def tag_clusters(input_collection, tagged_collection):
 
 if __name__ == "__main__":
 
-	myalldata, all_data_clusters = rlv.connect_mongodb(configfile='myalldata.ini', coll_name='all_data_clusters')
+	myalldata, all_data_clusters = rlv.connect_mongodb(configfile='ebasar.ini', coll_name='all_data_clusters')
 
-	myalldata2, tagged_clusters = rlv.connect_mongodb(configfile='myalldata.ini', coll_name='tagged_clusters')
+	myalldata2, tagged_clusters = rlv.connect_mongodb(configfile='ebasar.ini', coll_name='tagged_clusters')
 
 	tag_clusters(all_data_clusters, tagged_clusters)
 

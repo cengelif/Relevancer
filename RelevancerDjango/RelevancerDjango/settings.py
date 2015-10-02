@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 config = configparser.ConfigParser()
 
-config.read("ebasar_rel.ini")
+config.read("data/ebasar_rel.ini")
 
 
 # Quick-start development settings - unsuitable for production

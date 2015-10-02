@@ -9,6 +9,6 @@ urlpatterns = patterns('',
 
 	url(r'^$', Home.as_view(), name='home'),
 
-	url(r'^cluster$', ClusterView.as_view(), name='cluster'),
+	url(r'^cluster/(?P<collname>\w+)$', ClusterView.as_view(), name='cluster'),
 
 )

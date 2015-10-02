@@ -31,13 +31,15 @@
 			
 				The labels used before in this cluster : {{ all_labels }}
 		
-				<form method="post" action="{% url 'home' %}">
+
+				<form method="post" action="{% url 'cluster' collname %}">
 						{% csrf_token %}
 						<p>Write a Label</p>
-						<input type="text" name="cl_id" id="datepicker" value="{{ cluster.id }}" placeholder="{{ cluster.id }}" readonly/><br>
-  						<input type="text" name="label" id="datepicker" placeholder="write label here" required/><br>
+						<input type="text" name="cl_id"  value="{{ cluster.id }}" placeholder="{{ cluster.id }}" readonly/><br>
+  						<input type="text" name="label"  placeholder="write label here" required/><br>
   						<input type="submit" name="labeler" value="label">
  	 			</form>
+
   		
   				<br>
   		

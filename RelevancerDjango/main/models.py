@@ -1,14 +1,26 @@
 
 from django.db import models
 
-from mongoengine import * #DynamicDocument come from here.
+from mongoengine import *
 
 
-class Clusters(Document):
-	"""
-	It represents MongoDB structure and inherits the Document Class from MongoEngine.
-	"""
-	meta = {'collection' : 'all_data_clusters'}
+class Labels(DynamicDocument):
+
+	meta = {'collection' : 'labels'}
+	all_labels = ListField(StringField())
+	coll_name = StringField()
+
+
+class CollectionList(DynamicDocument):
+
+	meta = {'collection' : 'CollectionList'}
+	collectionlist = ListField(StringField())
+
+
+class Clusters(DynamicDocument):
+
+	meta = {'abstract': True,}
+
 	ctweettuplelist  = ListField(StringField())
 	cstr = StringField()
 	cno = StringField()
@@ -19,9 +31,15 @@ class Clusters(Document):
 	label = StringField()
 
 
+class all_data_clusters(Clusters):
 
-class Labels(Document):
+	meta = {'collection': 'all_data_clusters'}
 
-	meta = {'collection' : 'labels'}
-	all_labels = ListField(StringField())
-	coll_name = StringField()
+
+class all_data_clusters2(Clusters):
+
+	meta = {'collection': 'all_data_clusters2'}
+
+class dummy_collection(Clusters):
+
+	 meta = {'collection': 'all_data_clusters2'}

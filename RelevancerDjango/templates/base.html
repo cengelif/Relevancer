@@ -24,8 +24,12 @@ html {
 	 background-color: #D7E1F7;
 }
 li {
-	padding: 5px; 
+	padding: 5px 0; 
 	list-style-type:none;	
+}
+
+ul{
+	padding: 0;
 }
 {% block css %}{% endblock %}
 
@@ -49,9 +53,26 @@ li {
 		
 		<h5>Choose one of the clusters available;</h5>
 		
-		<ul>
-			<li><a href="{% url 'cluster' %}">all_data_clusters</a></li>				
-		</ul>			
+
+		{% if collectionlist %}		
+		
+				<ul>
+					{% for collname in collectionlist %}
+								<li>
+										<a href="{% url 'cluster' collname %}">{{ collname }}</a></a>
+								</li>
+					{% endfor %}		
+				</ul>			
+		
+		{% endif %}
+		
+		
+		<form method="post" action="{% url 'home' %}">
+				{% csrf_token %}
+  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br>
+  				<input type="submit" name="addcollection" value="Add New Collection">
+ 	 	</form>
+
 
 		{% endblock %}
 

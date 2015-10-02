@@ -39,7 +39,3 @@ class all_data_clusters(Clusters):
 class all_data_clusters2(Clusters):
 
 	meta = {'collection': 'all_data_clusters2'}
-
-class dummy_collection(Clusters):
-
-	 meta = {'collection': 'all_data_clusters2'}

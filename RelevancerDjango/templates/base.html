@@ -31,6 +31,7 @@ li {
 ul{
 	padding: 0;
 }
+
 {% block css %}{% endblock %}
 
 </style>
@@ -51,15 +52,18 @@ ul{
 
 		{% block main %}
 		
-		<h5>Choose one of the clusters available;</h5>
+		<h4>Choose one of the clusters available;</h4>
 		
 
 		{% if collectionlist %}		
 		
 				<ul>
-					{% for collname in collectionlist %}
+					{% for coll in collectionlist %}
 								<li>
-										<a href="{% url 'cluster' collname %}">{{ collname }}</a></a>
+										<b>"{{ coll.0 }}"</b> <br>
+										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
+										<a href="{{ coll.0 }}/unlabeled">Not Labeled</a> <br>
+										<a href="{{ coll.0 }}/labeled">Labeled</a> <br><br>
 								</li>
 					{% endfor %}		
 				</ul>			

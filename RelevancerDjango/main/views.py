@@ -14,55 +14,123 @@ from main.models import * #All models
 from mongoengine.base.common import get_document
 
 
+############################## FUNCTIONS #############################
 
-def getRandomClusterandLabels(collname):
 
-	## GET RANDOM CLUSTER
+def get_randomcluster(collname, is_labeled):
+
+	random_cluster =  None
+	current_label = ""
+	warning = ""
+	top10 = []
+	last10 = []
 
 	model = get_document(collname)
 
-	unlabeled_clusters = model.objects(label__exists = False)
+	if(is_labeled == "labeled"):
 
-	if(unlabeled_clusters):
-		random_cluster = random.choice(unlabeled_clusters)
-		
-		ctweettuplelist = []
-		for cl in random_cluster["ctweettuplelist"]:
-			ctweettuplelist.append(cl[2])
+		clusters = model.objects(label__exists = True)
 
-		top10 = ctweettuplelist[:10]
+		if(clusters):
 
-		last10 = ctweettuplelist[-10:]
+			random_cluster = random.choice(clusters)
 
-		warning = ""
+			current_label = random_cluster["label"]
 
-	else:
-		random_cluster =  None
-		top10 = []
-		last10 = []
+			ctweettuplelist = []
+			for cl in random_cluster["ctweettuplelist"]:
+				ctweettuplelist.append(cl[2])
 
-	## GET ALL LABELS FOR A CLUSTER
+			top10 = ctweettuplelist[:10]
 
-	label_coll = Labels.objects.get(coll_name = collname)
+			last10 = ctweettuplelist[-10:]
+
+		else:
+
+			warning = "There is not any labeled cluster yet"
+
+
+	elif(is_labeled == "unlabeled"):
+
+		clusters = model.objects(label__exists = False)
+
+		if(clusters):
+
+			random_cluster = random.choice(clusters)
+
+			ctweettuplelist = []
+			for cl in random_cluster["ctweettuplelist"]:
+				ctweettuplelist.append(cl[2])
+
+			top10 = ctweettuplelist[:10]
+
+			last10 = ctweettuplelist[-10:]
+
+		else:
+
+			warning = "All clusters are labeled."
+
+
+	return random_cluster, top10, last10, current_label, warning
+
+
+
+def get_labels(collname):
+
+	model = get_document(collname)
+
+	clusters = model.objects(label__exists = True)
 
 	all_labels = []
-	for lbl in label_coll["all_labels"]:
-		all_labels.append(lbl)
+	for lbl in clusters:
+		if(lbl["label"] not in all_labels):
+			all_labels.append(lbl["label"])
 
-	warning = "All clusters labeled in this collection"
+	num_of_cl = []
+	for labl in all_labels:
+		num_of_cl.append(len(model.objects(label = labl)))
 
-	return random_cluster, top10, last10, all_labels, warning
+	labellist = zip(all_labels, num_of_cl)	
+
+	return labellist
+
+
+
+def get_collectioninfo():
+
+	colllist_obj = CollectionList.objects.get(pk = "560e57ade4b097feaeb9f951")
+
+	colllist = []
+	for colls in colllist_obj["collectionlist"]:
+		colllist.append(colls)
+
+	len_coll = []
+	len_unlabeled = []
+	len_labeled= []
+	for coll in colllist:
+		model = get_document(coll)
+		len_unlbld = len(model.objects(label__exists = False))
+		len_lbld =len(model.objects(label__exists = True))
+	
+		len_coll.append(len_unlbld + len_lbld)	
+		len_unlabeled.append(len_unlbld)
+		len_labeled.append(len_lbld)
+
+
+	collectionlist = zip(colllist, len_coll, len_unlabeled, len_labeled)
+
+	return collectionlist, colllist_obj
+
+
+
+############################## VIEWS #############################
 
 
 class Home(View):
 
 	def get(self, request):
 				
-		colllistdb = CollectionList.objects.get(pk = "560e57ade4b097feaeb9f951")
-
-		collectionlist = []
-		for colls in colllistdb["collectionlist"]:
-			collectionlist.append(colls)
+		collectionlist, colllist_obj = get_collectioninfo()
 
 		return render(request, 'base.html', {	
 				'collectionlist' : collectionlist,
@@ -75,21 +143,16 @@ class Home(View):
 
 				newcollection = request.POST['newcollection']
 
-				colllistdb = CollectionList.objects.get(pk = "560e57ade4b097feaeb9f951")
-
-				collectionlist = []
-				for colls in colllistdb["collectionlist"]:
-					collectionlist.append(colls)
+				collectionlist, colllist_obj = get_collectioninfo()
 
 				collectionlist.append(newcollection)
 
-				colllistdb.update(set__collectionlist = collectionlist)
+				colllist_obj.update(set__collectionlist = collectionlist)
+
 
 				with open("main/models.py", "a") as myfile:
-   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': 'all_data_clusters2'}")
+   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': '" + newcollection + "'}")
 
-
-				Labels(coll_name = newcollection, all_labels = []).save()
 
 				return render(request, 'base.html', {	
 						'collectionlist' : collectionlist,
@@ -100,23 +163,27 @@ class Home(View):
 
 class ClusterView(View):
 
-	def get(self, request, collname):
+	def get(self, request, collname, is_labeled):
 				
-		cluster, top10, last10, all_labels, warning = getRandomClusterandLabels(collname)
+		random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+		labellist = get_labels(collname)
 
 		return render(request, 'cluster.html', {	
-				'cluster' : cluster,
+				'random_cluster' : random_cluster,
 				'top10' : top10,
 				'last10' : last10,
-				'all_labels' : all_labels, 
-				'warning' : warning,
+				'labellist' : labellist, 
 				'collname' : collname,
+				'is_labeled': is_labeled,
+				'current_label' : current_label,
+				'warning' : warning,
 		})
 
 
-	def post(self, request, collname):
+	def post(self, request, collname, is_labeled):
 
-			if "labeler" in request.POST:
+			if "addlabel" in request.POST:
 			
 				#Add the label to DB
 				input_label = request.POST['label']
@@ -126,24 +193,19 @@ class ClusterView(View):
 
 				model.objects.get(pk=cl_id).update(set__label = str(input_label))
 				
-				# New Cluster to label and labels to update
-				new_cluster, new_top10, new_last10, all_labels, warning = getRandomClusterandLabels(collname)
+				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 
-				if (input_label not in all_labels):
-					all_labels.append(input_label)
-
-				Labels.objects.get(coll_name = collname).update(set__all_labels = all_labels)
+				labellist = get_labels(collname)
 
 				return render(request, 'cluster.html', {	
-					'cluster' : new_cluster,
-					'top10' : new_top10,
-					'last10' : new_last10,
-					'label' : input_label,
-					'cl_id' : cl_id,
-					'all_labels' : all_labels, 
-					'warning' : warning,
+					'random_cluster' : random_cluster,
+					'top10' : top10,
+					'last10' : last10,
+					'labellist' : labellist, 
 					'collname' : collname,
+					'is_labeled': is_labeled,
+					'current_label' : current_label,
+					'warning' : warning,
 				})
-
-
+				
 

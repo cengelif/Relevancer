@@ -30,11 +30,11 @@ config.read("ebasar_rel.ini")
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']
 
 
 # Application definition
@@ -110,6 +110,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
+
 
 STATIC_URL = '/static/'
 

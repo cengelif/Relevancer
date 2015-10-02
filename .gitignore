@@ -1,9 +1,13 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
 *~
 *.ini
 *.pickle
+*.pid
+
+relenv/
 
 #Ipython Notebook
 .ipynb_checkpoints

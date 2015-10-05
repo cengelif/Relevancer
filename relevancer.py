@@ -32,6 +32,8 @@ logging.info("\nScript started")
 
 def connect_mongodb(configfile="myconfig.ini", coll_name=None):
 
+	logging.info("Connecting to the db with parameters:\n configfile:"+str(configfile)+"\t coll_name:"+str(coll_name))
+
 # Config Parser;
 	config = configparser.ConfigParser()
 	config.read(configfile)
@@ -52,6 +54,7 @@ def connect_mongodb(configfile="myconfig.ini", coll_name=None):
 		if ('user_name' in locals()) and ('passwd' in locals()):
 			rlvdb.authenticate(user_name, passwd)
 		rlvcl = rlvdb[coll_name]  # Collection
+		logging.info("Connected to the DB successfully.")
 	except Exception:
 		sys.exit("Database connection failed!")
 
@@ -63,6 +66,7 @@ max_dist_thres = 0.85  # the biggest distance of a tweet to the cluster centroid
 target_labeling_ratio = 0.5  # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 # result_collection = "relevancer_result"
 http_re = re.compile(r'https?[^\s]*')
+usr_re = re.compile(r'@[^\s]*')
 my_token_pattern = r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 no_tok = False  # no_tok by default. 
 #active_column = ""
@@ -256,24 +260,31 @@ def read_json_tweets_database(rlvcl, mongo_query, tweet_count=-1, reqlang='en'):
 	return ftwits
 
 def read_json_tweet_fields_database(rlvcl, mongo_query, read_fields={'text': 1, 'id_str': 1, '_id': 0, 'user': 1}, tweet_count=-1, annotated_ids=[], annotated_users=[]):
+	"""
+		"annotated_users" may contain user screen names or user_ids.
 
-	time = datetime.datetime.now()
-	logging.info("reading_fields_started_at: " + str(time))
+	"""
+	logging.info("reading_fields_started with the following parameters:\nmongoquery="+str(mongo_query)+"\trlvcl(collection)="+str(rlvcl))
 
+	
 	ftwits = []
 	for i, t in enumerate(rlvcl.find(mongo_query, read_fields)):
-		if i != tweet_count and t['id_str'] not in annotated_ids and t["user"]["screen_name"] not in annotated_users:  # restrict line numbers for test
+		if (i != tweet_count) and (t['id_str'] not in annotated_ids) and ((("user" in t) and (t["user"]["screen_name"] not in annotated_users)) or (("user_id" in t) and (t["user_id"] not in annotated_users))):  # restrict line numbers for test
 			# break
 			if "retweeted_status" in t:
 				t["is_retweet"] = True
 			else:
 				t["is_retweet"] = False
-			t['screen_name'] = t["user"]['screen_name']
-			t1 = {k: v for k, v in t.items() if k not in ["user"]}
+
+			if "user" in t:
+				t['screen_name'] = t["user"]['screen_name']
+
+			t1 = {k: v for k, v in t.items() if k not in ["user"]} # exclude it after you get the required information. It contains many information in an original tweet.
 			ftwits.append(t1)  # .splitlines()
 		elif i == tweet_count:
 			logging.info("Number of tweets read:"+str(i))
 			break
+
 	logging.info("end of database read, example tweet:" + str(ftwits[-1]))
 
 	return ftwits
@@ -321,10 +332,12 @@ def create_dataframe(tweetlist):
 def normalize_text(mytextDF, create_intermediate_result=False):
 
 	if create_intermediate_result:
-		mytextDF["normalized"] = mytextDF[active_column].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
-		mytextDF[active_column] = mytextDF["normalized"]
+		mytextDF["normalized_http"] = mytextDF[active_column].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+		mytextDF["normalized_usr"] = mytextDF["normalized_http"].apply(lambda tw: re.sub(usr_re, 'usrusrusr', tw))
+		mytextDF[active_column] = mytextDF["normalized_usr"]
 	else:
 		mytextDF[active_column] = mytextDF[active_column].apply(lambda tw: re.sub(http_re, 'urlurlurl', tw))
+		mytextDF[active_column] = mytextDF[active_column].apply(lambda tw: re.sub(usr_re, 'usrusrusr', tw))
 
 	return mytextDF   
 
@@ -350,7 +363,7 @@ def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine', d
 	logging.info("\n size of mytext:" + str(len(active_tweet_df[active_column])))
 
 	freqcutoff = int(m.log(len(active_tweet_df)))
-	logging.info("Tweet count is:"+str(len(active_tweet_df))+"freqcutoff:"+str(freqcutoff))
+	logging.info("Tweet count is:"+str(len(active_tweet_df))+"\tfreqcutoff:"+str(freqcutoff))
 
 	logging.info("In 'word_vectorizer' method, we use 'TfidfVectorizer' to get feature names and parameter is 'active_tweet_df[active_column]' .")
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=my_token_pattern, sublinear_tf=True)
@@ -432,7 +445,7 @@ def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine', d
 		logging.info("\nNear duplicate tweet groups are below: ")
 		logging.info("\nsize of group " + str(i) + ':' + str(len(tweets)))
 
-	if test:
+	if debug:
 		logging.info("COMPLETE: Near duplicate tweet sets:" + "\n\n\n".join(["\n".join(twset) + "\n" + "\n".join(twset) for twset in tweet_sets]))
 	else:
 		logging.info("SUMMARY: Near duplicate tweet sets:" + "\n\n\n".join(["\n".join(twset[:1]) + "\n" + "\n".join(twset[-1:]) for twset in tweet_sets]))
@@ -565,7 +578,35 @@ def get_vectorizer_and_mnb_classifier(tweets_as_text_label_df, my_token_pattern,
 
 	return vect_and_classifier
 
-def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_diff_thres=0.5, max_dist_thres=0.8, iteration_no=1, min_clusters=1, printsize=True, nameprefix='',  selection=True, strout=False): 
+def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_diff_thres=0.4, max_dist_thres=0.8, iteration_no=1, min_clusters=1, printsize=True, nameprefix='',  selection=True, strout=False, user_identifier='screen_name', cluster_list=None): 
+	"""
+	Have modes:
+	mode1: get a certain number of clusters. Relax parameters for it. (This is the current Mode!)
+	mode2: get clusters that comply with certain conditions.
+
+
+	"""
+	if min_dist_thres > 0.825 and max_dist_thres>0.95:
+		logging.info("The parameter values are too high to allow a good selection. We just finish searching for clusters at that stage.")
+		logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
+		return cluster_list
+
+
+	if cluster_list is None:
+		cluster_list = []
+	else:
+		logging.info("Starting the iteration with:"+str(len(cluster_list))+" clusters.")
+
+		clustered_tweet_ids = []
+
+		for clust_dict in cluster_list:
+			clustered_tweet_ids += clust_dict["twids"]
+
+		logging.info("Number of already clustered tweets are:"+str(len(clustered_tweet_ids)))
+
+		logging.info("Tweet set size to be clustered:"+str(len(tweetsDF)))
+		tweetsDF = tweetsDF[~tweetsDF.id_str.isin(clustered_tweet_ids)]
+		logging.info("Tweet set size to be clustered(after elimination of the already clustered tweets):"+str(len(tweetsDF)))
 
 	logging.info('Creating clusters was started!!')
 	logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
@@ -593,7 +634,7 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 		logging.info("The data set is BIG, MiniBatchKMeans is used.")
 
 	km.fit(text_vectors)
-	cluster_str_list = []  # user_entropy = 
+	
 	# Cluster = namedtuple('Cluster', ['cno', 'cstr','tw_ids'])
 	clustersizes = get_cluster_sizes(km, tweetsDF[active_column].values)
 
@@ -606,11 +647,11 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 		similar_tuple_list = []
 		for i in similar_indices:
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
-			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[active_column].values[i], tweetsDF['screen_name'].values[i])) 
+			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[active_column].values[i], tweetsDF[user_identifier].values[i])) 
 			if strout:
-				similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i] + "\t" + tweetsDF[active_column].values[i] + "\t" + tweetsDF['user':'screen_name'].values[i])
+				similar.append(str(dist) + "\t" + tweetsDF['id_str'].values[i] + "\t" + tweetsDF[active_column].values[i] + "\t" + tweetsDF[user_identifier].values[i])
 		
-		similar_tuple_list = sorted(similar_tuple_list, key=itemgetter(0)) # sort based on the 0th element.
+		similar_tuple_list = sorted(similar_tuple_list, key=itemgetter(0)) # sort based on the 0th, which is the distance from the center, element.
 		# test sortedness!
 
 		if strout:	
@@ -618,7 +659,7 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 		cluster_info_str = ''
 		user_list = [t[3] for t in similar_tuple_list]  # t[3] means the third element in the similar_tuple_list.
 		if selection:
-			if (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0] + min_max_diff_thres) > similar_tuple_list[-1][0]):  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
+			if (len(similar_tuple_list)>2) and (similar_tuple_list[0][0] < min_dist_thres) and (similar_tuple_list[-1][0] < max_dist_thres) and ((similar_tuple_list[0][0] + min_max_diff_thres) > similar_tuple_list[-1][0]):  # the smallest and biggest distance to the centroid should not be very different, we allow 0.4 for now!
 				cluster_info_str += "cluster number and size are: " + str(cn) + '    ' + str(clustersizes[str(cn)]) + "\n"
 				for txt in tweetsDF[active_column].values[similar_indices]:
 					cluster_bigram_cntr.update(get_uni_bigrams(txt))  # regex.findall(r"\b\w+[-]?\w+\s\w+", txt, overlapped=True))
@@ -665,28 +706,28 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 
 		if len(cluster_info_str) > 0:  # that means there is some information in the cluster.
 			logging.info("\nCluster was appended. cluster_info_str:"+cluster_info_str+"\tmin_dist="+str(similar_tuple_list[0][0])+"\tmax_dist="+str(similar_tuple_list[-1][0]))
-			cluster_str_list.append({'cno': cn, 'cnoprefix': nameprefix+str(cn), 'user_entropy': entropy(user_list), 'rif': frequency, 'cstr': cluster_info_str, 'ctweettuplelist': similar_tuple_list,  'twids': list(tweetsDF[np.in1d(km.labels_, [cn])]["id_str"].values)})  # 'user_ent':entropy(user_list),
+			cluster_list.append({'cno': cn, 'cnoprefix': nameprefix+str(cn), 'user_entropy': entropy(user_list), 'rif': frequency, 'cstr': cluster_info_str, 'ctweettuplelist': similar_tuple_list,  'twids': list(tweetsDF[np.in1d(km.labels_, [cn])]["id_str"].values)})  # 'user_ent':entropy(user_list),
 
-	logging.info("length of cluster_str_list:"+str(len(cluster_str_list)))
-	len_clust_list = len(cluster_str_list) # use to adjust the threshold steps for the next iteration. If you are closer to the target step smaller.
+	logging.info("length of cluster_list:"+str(len(cluster_list)))
+	len_clust_list = len(cluster_list) # use to adjust the threshold steps for the next iteration. If you are closer to the target step smaller.
 	if len_clust_list<min_clusters:
 		logging.info("There is not enough clusters, call the create_clusters again with relaxed threshold parameters (recursively). Iteration no:"+str(iteration_no))
 
-		if len_clust_list<2: 
-			factor = 10
-		else:
-			factor = len_clust_list*10
+		factor = (min_clusters-len_clust_list)/1000 # if it needs more clusters, it will make a big step
+		
+		min_dist_thres2, max_dist_thres2, min_max_diff_thres2 = relax_parameters(min_dist_thres, max_dist_thres, min_max_diff_thres, factor)
+		logging.info("Threshold step sizes are: \nmin_dist_thres="+str(min_dist_thres-min_dist_thres2)+"\tmax_dist_thres="+str(max_dist_thres-max_dist_thres2)+"\tmin_max_diff_thres="+str(min_max_diff_thres-min_max_diff_thres2))
+		return create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=min_dist_thres2, min_max_diff_thres=min_max_diff_thres2, max_dist_thres=max_dist_thres2,  \
+			iteration_no=iteration_no+1, min_clusters=min_clusters, user_identifier=user_identifier, cluster_list=cluster_list)
 
-		logging.info("Threshold step sizes are: \nmin_dist_thres="+str(min_dist_thres/factor)+"\tmax_dist_thres="+str(max_dist_thres/(factor*2))+"\tmin_max_diff_thres=",str(min_max_diff_thres/(factor*3) ))
+	return cluster_list
 
-		min_dist_thres = min_dist_thres + min_dist_thres/factor  # As you are closer to the center distance change fast (Euclidean distance). Step a bit big.
-		max_dist_thres = max_dist_thres + max_dist_thres/(factor*2) # If you are far from the center, there will be much variation in small differences of distance (Euclidean). Step small.
-		min_max_diff_thres = min_max_diff_thres + min_max_diff_thres/(factor*3) # There is not much sense in increasing it much. Otherwise it will loose its meaning easily. 
+def relax_parameters(min_dist_thres,max_dist_thres,min_max_diff_thres,factor):
+	min_dist_thres = min_dist_thres + min_dist_thres*(factor/2)  # As you are closer to the center distance change fast (Euclidean distance). Step a bit big.
+	max_dist_thres = max_dist_thres + max_dist_thres*(factor/3) # If you are far from the center, there will be much variation in small differences of distance (Euclidean). Step small.
+	min_max_diff_thres = min_max_diff_thres + min_max_diff_thres*(factor/4) # There is not much sense in increasing it much. Otherwise it will loose its meaning easily. 
 
-		return create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=min_dist_thres, min_max_diff_thres=min_max_diff_thres, max_dist_thres=max_dist_thres, iteration_no=iteration_no+1, min_clusters=min_clusters)
-
-	return cluster_str_list
-
+	return min_dist_thres, max_dist_thres, min_max_diff_thres
 
 if __name__ == "__main__":
 	import output

@@ -36,9 +36,22 @@ ToDo:
 - Create timeline of the tweets in a cluster. You may need to include the datetime of the tweet.
 - For more than 10.000 tweets you should use a server to run the script because of this, the matrix that occur in the get_and_eliminate_tweets method needs high memory so local memory is not enough.
 - np.random() process time takes longtime. 
+- try not to use Global variables, check!
+- Make Relevancer Object Oriented!
+- Write test cases for each method.
+- Use proper min() and max() methods when comparing the thresholds for closest and farthest distances from the cluster centers. Using first and last tweets after a sort is risky.
+
+- Do more sophisticated cluster selection. If most of the tweets are close to the center, ignore the tail, use the
+majority of the tweets. Use statistical tests for skewness. You can use %75 %25 quntiles.
+
+- Do it stream based. A generator might be used. Make it available as soon as a cluster is found.
+
+- Does feature extraction respect to new lines? Check. It should take the new lines into account.
 
 
 EK:
+
+Put an option to extend a topic. It can be a single class classifier, to find most similar tweets to that group.
 
 Do a study on identifying distribution of the distances to the cluster center in the clusters. If first half of the distances focused a lot, ignore the second half. Check
 first %25, second, etc. So the cluster selection can be optimized.

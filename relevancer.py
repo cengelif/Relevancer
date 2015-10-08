@@ -584,18 +584,21 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 	mode1: get a certain number of clusters. Relax parameters for it. (This is the current Mode!)
 	mode2: get clusters that comply with certain conditions.
 
+	"min_max_diff_thres" should not be too small. Then You miss thresholds like: min 0.3 - min 0.7: The top is controlled by the maximum anyway. Do not fear from having it big: around 0.4
 
 	"""
-	if min_dist_thres > 0.825 and max_dist_thres>0.95:
+	if min_dist_thres > 0.85 and max_dist_thres>0.99:
 		logging.info("The parameter values are too high to allow a good selection. We just finish searching for clusters at that stage.")
 		logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
 		return cluster_list
 
 
+	len_clust_list = 0
 	if cluster_list is None:
 		cluster_list = []
 	else:
-		logging.info("Starting the iteration with:"+str(len(cluster_list))+" clusters.")
+		len_clust_list = len(cluster_list)
+		logging.info("Starting the iteration with:"+str(len_clust_list)+" clusters.")
 
 		clustered_tweet_ids = []
 
@@ -620,8 +623,8 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 	# logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
 	# logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
 
-	n_clust = int(m.sqrt(len(tweetsDF))/2)+iteration_no*5 # The more clusters the easier they will be focused on a topic.
-	n_initt = int(m.log10(len(tweetsDF)))+iteration_no  # up to 1 million, in KMeans setting, having many iterations is not a problem. # more iterations higher chance?
+	n_clust = int(m.sqrt(len(tweetsDF))/2)+iteration_no*(min_clusters-len_clust_list) # The more clusters we need, the more clusters we will create.
+	n_initt = int(m.log10(len(tweetsDF)))+iteration_no  # up to 1 million, in KMeans setting, having many iterations is not a problem. # more iterations higher chance of having candidate clusters.
 
 	logging.info("Clustering parameters are:\nnclusters="+str(n_clust)+"\tn_initt="+str(n_initt))
 	

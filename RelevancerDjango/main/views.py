@@ -10,7 +10,7 @@ import random
 
 # DB / models
 import mongoengine
-from main.models import * #All models
+from main.models import * # Clusters, CollectionList (Have to import everything because the models can add and delete dynamically)
 from mongoengine.base.common import get_document
 
 

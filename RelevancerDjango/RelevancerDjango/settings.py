@@ -16,11 +16,18 @@ from mongoengine import *
 import configparser
 
 
+which_db = "localdb" #current options: localdb, mongolab_ebasar 
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 config = configparser.ConfigParser()
 
-config.read("data/ebasar_rel.ini")
+if(which_db == "localdb"):
+	config.read("data/localdb.ini")
+
+elif(which_db == "mongolab_ebasar"):
+	config.read("data/ebasar_rel.ini")
 
 
 # Quick-start development settings - unsuitable for production
@@ -88,10 +95,14 @@ MONGOENGINE_USER_DOCUMENT = 'mongoengine.django.auth.User'
 db_name = config.get('rel_mongo_db', 'db_name')
 db_host = config.get('rel_mongo_db', 'client_host')
 db_port = int(config.get('rel_mongo_db', 'client_port'))
-db_uname = config.get('rel_mongo_db', 'user_name')
-db_passwd = config.get('rel_mongo_db', 'passwd')
 
-connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
+if(which_db == "localdb"):
+	connect(db_name, host=db_host, port=db_port)
+
+elif(which_db == "mongolab_ebasar"):
+	db_uname = config.get('rel_mongo_db', 'user_name')
+	db_passwd = config.get('rel_mongo_db', 'passwd')
+	connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
 
 
 # Internationalization

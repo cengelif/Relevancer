@@ -39,3 +39,7 @@ class all_data_clusters(Clusters):
 class all_data_clusters2(Clusters):
 
 	meta = {'collection': 'all_data_clusters2'}
+
+class genocide_clusters_20151005(Clusters):
+
+	meta = {'collection': 'genocide_clusters_20151005'}

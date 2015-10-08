@@ -11,16 +11,23 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
-from mongoengine import *
+import mongoengine
 
 import configparser
+
+
+which_db = "localdb" #current options: localdb, mongolab_ebasar 
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 config = configparser.ConfigParser()
 
-config.read("data/ebasar_rel.ini")
+if(which_db == "localdb"):
+	config.read("data/localdb.ini")
+
+elif(which_db == "mongolab_ebasar"):
+	config.read("data/ebasar_rel.ini")
 
 
 # Quick-start development settings - unsuitable for production
@@ -30,9 +37,9 @@ config.read("data/ebasar_rel.ini")
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-TEMPLATE_DEBUG = False
+TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']
 
@@ -88,10 +95,14 @@ MONGOENGINE_USER_DOCUMENT = 'mongoengine.django.auth.User'
 db_name = config.get('rel_mongo_db', 'db_name')
 db_host = config.get('rel_mongo_db', 'client_host')
 db_port = int(config.get('rel_mongo_db', 'client_port'))
-db_uname = config.get('rel_mongo_db', 'user_name')
-db_passwd = config.get('rel_mongo_db', 'passwd')
 
-connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
+if(which_db == "localdb"):
+	mongoengine.connect(db_name, host=db_host, port=db_port)
+
+elif(which_db == "mongolab_ebasar"):
+	db_uname = config.get('rel_mongo_db', 'user_name')
+	db_passwd = config.get('rel_mongo_db', 'passwd')
+	mongoengine.connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
 
 
 # Internationalization

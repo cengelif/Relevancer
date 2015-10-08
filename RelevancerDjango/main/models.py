@@ -1,7 +1,7 @@
 
 from django.db import models
 
-from mongoengine import *
+from mongoengine import DynamicDocument, ListField, StringField
 
 
 class CollectionList(DynamicDocument):

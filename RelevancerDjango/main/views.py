@@ -10,7 +10,7 @@ import random
 
 # DB / models
 import mongoengine
-from main.models import * # Clusters, CollectionList (Have to import everything because the models can add and delete dynamically)
+from main.models import * # Clusters, CollectionList (Have to import everything(with star) because the models can be added dynamically)
 from mongoengine.base.common import get_document
 
 
@@ -29,11 +29,13 @@ def get_randomcluster(collname, is_labeled):
 
 	if(is_labeled == "labeled"):
 
-		clusters = model.objects(label__exists = True)
+		num_of_clusters = model.objects(label__exists = True).count()
 
-		if(clusters):
+		if(num_of_clusters > 0):
 
-			random_cluster = random.choice(clusters)
+			rand = random.randint(0, num_of_clusters-1)
+
+			random_cluster = model.objects(label__exists = True)[rand]
 
 			current_label = random_cluster["label"]
 
@@ -52,11 +54,13 @@ def get_randomcluster(collname, is_labeled):
 
 	elif(is_labeled == "unlabeled"):
 
-		clusters = model.objects(label__exists = False)
+		num_of_clusters = model.objects(label__exists = False).count()
 
-		if(clusters):
+		if(num_of_clusters > 0):
 
-			random_cluster = random.choice(clusters)
+			rand = random.randint(0, num_of_clusters-1)
+
+			random_cluster = model.objects(label__exists = False)[rand]
 
 			ctweettuplelist = []
 			for cl in random_cluster["ctweettuplelist"]:
@@ -79,18 +83,18 @@ def get_labels(collname):
 
 	model = get_document(collname)
 
-	clusters = model.objects(label__exists = True)
+	all_labels = model.objects(label__exists = True).only("label")
 
-	all_labels = []
-	for lbl in clusters:
-		if(lbl["label"] not in all_labels):
-			all_labels.append(lbl["label"])
+	label_set = []
+	for lbl in all_labels:
+		if(lbl["label"] not in label_set):
+			label_set.append(lbl["label"])
 
 	num_of_cl = []
-	for labl in all_labels:
-		num_of_cl.append(len(model.objects(label = labl)))
+	for labl in label_set:
+		num_of_cl.append(model.objects(label = labl).count())
 
-	labellist = zip(all_labels, num_of_cl)	
+	labellist = zip(label_set, num_of_cl)	
 
 	return labellist
 
@@ -98,19 +102,19 @@ def get_labels(collname):
 
 def get_collectioninfo():
 
-	colllist_obj = CollectionList.objects.get(pk = "560e57ade4b097feaeb9f951")
+	# Object is called to update in "addcollection" part
+	colllist_obj = CollectionList.objects.first()
 
-	colllist = []
-	for colls in colllist_obj["collectionlist"]:
-		colllist.append(colls)
+	colllist = colllist_obj["collectionlist"]
+
 
 	len_coll = []
 	len_unlabeled = []
 	len_labeled= []
 	for coll in colllist:
 		model = get_document(coll)
-		len_unlbld = len(model.objects(label__exists = False))
-		len_lbld =len(model.objects(label__exists = True))
+		len_unlbld = model.objects(label__exists = False).count()
+		len_lbld = model.objects(label__exists = True).count()
 	
 		len_coll.append(len_unlbld + len_lbld)	
 		len_unlabeled.append(len_unlbld)

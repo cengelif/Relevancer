@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
-from mongoengine import *
+import mongoengine
 
 import configparser
 
@@ -37,9 +37,9 @@ elif(which_db == "mongolab_ebasar"):
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-TEMPLATE_DEBUG = False
+TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']
 
@@ -97,12 +97,12 @@ db_host = config.get('rel_mongo_db', 'client_host')
 db_port = int(config.get('rel_mongo_db', 'client_port'))
 
 if(which_db == "localdb"):
-	connect(db_name, host=db_host, port=db_port)
+	mongoengine.connect(db_name, host=db_host, port=db_port)
 
 elif(which_db == "mongolab_ebasar"):
 	db_uname = config.get('rel_mongo_db', 'user_name')
 	db_passwd = config.get('rel_mongo_db', 'passwd')
-	connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
+	mongoengine.connect(db_name, host=db_host, port=db_port, username=db_uname , password=db_passwd)
 
 
 # Internationalization

@@ -1,14 +1,7 @@
 
 from django.db import models
 
-from mongoengine import *
-
-
-class Labels(DynamicDocument):
-
-	meta = {'collection' : 'labels'}
-	all_labels = ListField(StringField())
-	coll_name = StringField()
+from mongoengine import DynamicDocument, ListField, StringField
 
 
 class CollectionList(DynamicDocument):
@@ -39,6 +32,7 @@ class all_data_clusters(Clusters):
 class all_data_clusters2(Clusters):
 
 	meta = {'collection': 'all_data_clusters2'}
+
 
 class genocide_clusters_20151005(Clusters):
 

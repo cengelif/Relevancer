@@ -37,9 +37,9 @@ elif(which_db == "mongolab_ebasar"):
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']
 

@@ -6,6 +6,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
 # Python
+import sys
+sys.path.append('../') # adds 'Relevancer' folder to PYTHONPATH to find relevancer.py etc.
 import random
 import time
 
@@ -14,6 +16,8 @@ import mongoengine
 from main.models import * # Clusters, CollectionList (Have to import everything(with star) because the models can be added dynamically)
 from mongoengine.base.common import get_document
 
+# Our Own Sources
+import genocide_data_analysis
 
 ############################## FUNCTIONS #############################
 
@@ -231,5 +235,19 @@ class ClusterView(View):
 					'current_label' : current_label,
 					'warning' : warning,
 				})
-				
+
+
+
+class Clustering(View):
+
+	def get(self, request):
+
+	
+		genocide_data_analysis.clustering()
+
+
+		return Home.as_view()(self.request)
+
+
+
 

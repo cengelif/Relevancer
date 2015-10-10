@@ -11,7 +11,7 @@ my_token_pattern = r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 
 collection = 'all_data'  # 'flood'
 
-rlvdb, rlvcl = rlv.connect_mongodb(configfile='myalldata.ini', coll_name=collection)  # Db and the collection that contains the tweet set to be annotated.
+rlvdb, rlvcl = rlv.connect_mongodb(configfile='data/localdb.ini', coll_name=collection)  # Db and the collection that contains the tweet set to be annotated.
 
 begin = ObjectId('55cd9edc78300a0b48354fbd')  # 55950fb4d04475ee9867f3a4
 end = ObjectId('55d4448aa4c41a84e4a83341')  # 55950fc9d04475ee986841c3
@@ -28,6 +28,9 @@ rlv.logging.info("Number of tweets:" + str(len(tweetlist)))
 # print(len(tweetlist))
 
 tweetsDF = rlv.create_dataframe(tweetlist)
+
+active_col = "active_text"
+rlv.set_active_column(active_col)
 
 tok = rlv.tok_results(tweetsDF, elimrt=True)
 

@@ -11,4 +11,6 @@ urlpatterns = patterns('',
 
 	url(r'^(?P<collname>\w+)/(?P<is_labeled>\w+)$', ClusterView.as_view(), name='cluster'),
 
+	url(r'^/clustering$', Clustering.as_view(), name='clustering'),
+
 )

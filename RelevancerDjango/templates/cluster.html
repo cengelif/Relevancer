@@ -21,8 +21,16 @@ input {
 				
 		{% if random_cluster %}
 	
-				<h3>Top Ten Tweets</h3>
-		
+				{% if last10 %}	
+				
+					<h3>Top Ten Tweets</h3>
+					
+				{% else %}
+				
+					<h3>All Tweets</h3>				
+					
+				{% endif %}
+				
 				<ul>
 						{% for tweets in top10 %}
 								<li>
@@ -31,15 +39,19 @@ input {
 						{% endfor %}
 				</ul>
 			
-				<h3>Last Ten Tweets</h3>
+				{% if last10 %}			
+			
+					<h3>Last Ten Tweets</h3>
 		
-				<ul>
-						{% for tweets in last10 %}
-								<li>
-										{{ tweets }}	
-								</li>
-						{% endfor %}
-				</ul>
+					<ul>
+							{% for tweets in last10 %}
+									<li>
+											{{ tweets }}	
+									</li>
+							{% endfor %}
+					</ul>
+				
+				{% endif %}
 		
 
 				{% if labellist %}
@@ -64,7 +76,7 @@ input {
 					<form method="post" action="{% url 'cluster' collname is_labeled %}">
 							{% csrf_token %}
 							<input type="text" name="cl_id" class="hidden" value="{{ random_cluster.id }}" placeholder="{{ random_cluster.id }}" readonly/><br>
-  							<input type="text" name="label"  placeholder="Write your label here" required/><br>
+  							<input type="text" name="label"  placeholder="Write your label here" required pattern="\S+"/><br>
   							<input type="submit" name="addlabel" value="Add Label">
  	 				</form>
 
@@ -78,7 +90,7 @@ input {
 					<form method="post" action="{% url 'cluster' collname is_labeled %}">
 							{% csrf_token %}
 							<input type="text" name="cl_id" class="hidden" value="{{ random_cluster.id }}" placeholder="{{ random_cluster.id }}" readonly/><br>
-  							<input type="text" name="label"  placeholder="Write your label here" required/><br>
+  							<input type="text" name="label"  placeholder="Write your label here" required pattern="\S+"/><br>
   							<input type="submit" name="addlabel" value="Change Label">
  	 				</form>				
 				
@@ -86,7 +98,7 @@ input {
   				{% endif %}	
   				
   				
-  				<br>	
+  				<br>
   				
   				<a href="{% url 'cluster' collname is_labeled %}">
 							<button type="button">Skip this cluster</button></a>

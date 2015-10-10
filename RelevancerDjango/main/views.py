@@ -7,6 +7,7 @@ from django.conf import settings
 
 # Python
 import random
+import time
 
 # DB / models
 import mongoengine
@@ -39,13 +40,18 @@ def get_randomcluster(collname, is_labeled):
 
 			current_label = random_cluster["label"]
 
-			ctweettuplelist = []
+			tweetlist = []
 			for cl in random_cluster["ctweettuplelist"]:
-				ctweettuplelist.append(cl[2])
+				tweetlist.append(cl[2])
 
-			top10 = ctweettuplelist[:10]
+			if(len(tweetlist) > 20):
 
-			last10 = ctweettuplelist[-10:]
+				top10 = tweetlist[:10]
+
+				last10 = tweetlist[-10:]
+			
+			else:
+				top10 = tweetlist  #All tweets
 
 		else:
 
@@ -62,13 +68,18 @@ def get_randomcluster(collname, is_labeled):
 
 			random_cluster = model.objects(label__exists = False)[rand]
 
-			ctweettuplelist = []
+			tweetlist = []
 			for cl in random_cluster["ctweettuplelist"]:
-				ctweettuplelist.append(cl[2])
+				tweetlist.append(cl[2])
 
-			top10 = ctweettuplelist[:10]
+			if(len(tweetlist) > 20):
 
-			last10 = ctweettuplelist[-10:]
+				top10 = tweetlist[:10]
+
+				last10 = tweetlist[-10:]
+			
+			else:
+				top10 = tweetlist #All tweets
 
 		else:
 
@@ -100,30 +111,36 @@ def get_labels(collname):
 
 
 
-def get_collectioninfo():
+def get_collectionlist(choice):
 
 	# Object is called to update in "addcollection" part
 	colllist_obj = CollectionList.objects.first()
 
 	colllist = colllist_obj["collectionlist"]
 
+	if(choice == "info"):
+		len_coll = []
+		len_unlabeled = []
+		len_labeled= []
 
-	len_coll = []
-	len_unlabeled = []
-	len_labeled= []
-	for coll in colllist:
-		model = get_document(coll)
-		len_unlbld = model.objects(label__exists = False).count()
-		len_lbld = model.objects(label__exists = True).count()
+		for coll in colllist:
 	
-		len_coll.append(len_unlbld + len_lbld)	
-		len_unlabeled.append(len_unlbld)
-		len_labeled.append(len_lbld)
+			model = get_document(coll)
+			len_unlbld = model.objects(label__exists = False).count()
+			len_lbld = model.objects(label__exists = True).count()
+	
+			len_coll.append(len_unlbld + len_lbld)	
+			len_unlabeled.append(len_unlbld)
+			len_labeled.append(len_lbld)
 
 
-	collectionlist = zip(colllist, len_coll, len_unlabeled, len_labeled)
+		collectionlist = zip(colllist, len_coll, len_unlabeled, len_labeled)
 
-	return collectionlist, colllist_obj
+		return collectionlist
+
+	elif(choice == "update"):
+
+		return colllist_obj, colllist
 
 
 
@@ -134,7 +151,7 @@ class Home(View):
 
 	def get(self, request):
 				
-		collectionlist, colllist_obj = get_collectioninfo()
+		collectionlist = get_collectionlist("info")
 
 		return render(request, 'base.html', {	
 				'collectionlist' : collectionlist,
@@ -147,16 +164,19 @@ class Home(View):
 
 				newcollection = request.POST['newcollection']
 
-				collectionlist, colllist_obj = get_collectioninfo()
+				colllist_obj, colllist = get_collectionlist("update")
 
-				collectionlist.append(newcollection)
+				colllist.append(newcollection)
 
-				colllist_obj.update(set__collectionlist = collectionlist)
+				colllist_obj.update(set__collectionlist = colllist)
 
 
 				with open("main/models.py", "a") as myfile:
-   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': '" + newcollection + "'}")
+   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': '" + newcollection + "'}\n")
 
+				time.sleep(1) #temporary solution to prevent direct crush
+
+				collectionlist = get_collectionlist("info")
 
 				return render(request, 'base.html', {	
 						'collectionlist' : collectionlist,

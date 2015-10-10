@@ -73,9 +73,11 @@ ul{
 		
 		<form method="post" action="{% url 'home' %}">
 				{% csrf_token %}
-  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br>
+  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br><br>
   				<input type="submit" name="addcollection" value="Add New Collection">
  	 	</form>
+ 	 	
+ 	 	<h6>! WARNING : You need to refresh the page manually after this process</h6>
 
 
 		{% endblock %}

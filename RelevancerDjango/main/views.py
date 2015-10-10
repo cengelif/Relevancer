@@ -17,7 +17,7 @@ from main.models import * # Clusters, CollectionList (Have to import everything(
 from mongoengine.base.common import get_document
 
 # Our Own Sources
-import genocide_data_analysis
+#import genocide_data_analysis
 
 ############################## FUNCTIONS #############################
 
@@ -243,7 +243,7 @@ class Clustering(View):
 	def get(self, request):
 
 	
-		genocide_data_analysis.clustering()
+#		genocide_data_analysis.clustering()
 
 
 		return Home.as_view()(self.request)

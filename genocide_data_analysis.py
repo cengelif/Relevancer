@@ -59,13 +59,14 @@ def clustering():
 	tweetsDF[active_col] = tweetsDF["text"].copy()
 	tweetsDF = rlv.tok_results(tweetsDF, elimrt = True)
 
-	tweetsDF = rlv.normalize_text(tweetsDF)
-
 
 	# Write the eliminated tweets to database
 	tweetsRT = json.loads(tweetsDF.T.to_json()).values()
 	rlvdb["rt_eliminated"].insert(tweetsRT)
 	print("RT Eliminated & written to mongodb")
+
+
+	tweetsDF = rlv.normalize_text(tweetsDF)
 
 
 	tweetsDF_uniq = eliminate_duplicates_recursively(tweetsDF.copy(), rlv.get_and_eliminate_near_duplicate_tweets)

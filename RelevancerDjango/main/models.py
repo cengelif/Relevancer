@@ -10,6 +10,22 @@ class CollectionList(DynamicDocument):
 	collectionlist = ListField(StringField())
 
 
+class testcl(DynamicDocument): # raw tweet data
+
+	meta = {'collection' : 'testcl'}
+	text = StringField()
+
+class rt_eliminated(DynamicDocument): # retweets are eliminated 
+
+	meta = {'collection' : 'rt_eliminated'}
+	text = StringField()
+
+class duplicates_eliminated(DynamicDocument): # duplicates are eliminated 
+
+	meta = {'collection' : 'duplicates_eliminated'}
+	text = StringField()
+
+
 class Clusters(DynamicDocument):
 
 	meta = {'abstract': True,}
@@ -27,11 +43,6 @@ class Clusters(DynamicDocument):
 class all_data_clusters(Clusters):
 
 	meta = {'collection': 'all_data_clusters'}
-
-
-class all_data_clusters2(Clusters):
-
-	meta = {'collection': 'all_data_clusters2'}
 
 
 class genocide_clusters_20151005(Clusters):

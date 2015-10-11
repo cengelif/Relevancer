@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}How It Works? - Relevancer{% endblock %}
+
+{% block main %}
+
+
+<h2>{{ current_page }}</h2>
+
+Number of instances at this point : <b>{{ length }}</b>
+
+<br><br>
+
+Next Step : <a href="{% url 'howitworks' nextpage %}">{{ next_step }}</a>
+
+<br><br>
+
+{% if tweets %}
+	<ul>
+		{% for tweet in tweets %}
+			<li>
+					{{ tweet }}	
+			</li>
+		{% endfor %}
+	</ul>
+{% endif %}
+
+
+
+
+{% endblock %}

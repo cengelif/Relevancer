@@ -58,11 +58,12 @@ def clustering():
 	tweetsDF[active_col] = tweetsDF["text"].copy()
 	tweetsDF = rlv.tok_results(tweetsDF, elimrt = True)
 
-
-
 	tweetsDF = rlv.normalize_text(tweetsDF)
 
 
+	# Write the eliminated tweets to database
+	tweetsRT = json.loads(tweetsDF.T.to_json()).values()
+	rlvdb["rt_eliminated"].insert(tweetsRT)
 
 
 	tweetsDF_uniq = eliminate_duplicates_recursively(tweetsDF.copy(), rlv.get_and_eliminate_near_duplicate_tweets)
@@ -72,13 +73,16 @@ def clustering():
 	tweetsDF_uniq.to_pickle("20151005_unique_genocide_tweets.pickle")
 
 
+	# Write the eliminated tweets to database
+	tweetsDuEl = json.loads(tweetsDF_uniq.T.to_json()).values()
+	rlvdb["duplicates_eliminated"].insert(tweetsDuEl)
+
+
 	cluster_list = rlv.create_clusters(tweetsDF_uniq, my_token_pattern, min_dist_thres=0.725, max_dist_thres=0.875, min_max_diff_thres=0.4, nameprefix='1-', min_clusters=100, user_identifier='user_id')
 
 
-	rlvdb2, rlvcl2 = rlv.connect_mongodb(configfile='data/localdb.ini',coll_name="genocide_test")
-
 	collection_name = 'genocide_test'
-	rlvdb2[collection_name].insert(cluster_list) #Each iteration results with a candidate cluster list. Each iteration will have its own list. Therefore they are not mixed.
+	rlvdb[collection_name].insert(cluster_list) #Each iteration results with a candidate cluster list. Each iteration will have its own list. Therefore they are not mixed.
 
 	print("db written")
 

@@ -22,7 +22,9 @@ from mongoengine.base.common import get_document
 ############################## FUNCTIONS #############################
 
 
-def get_randomcluster(collname, is_labeled):
+def get_randomcluster(collname, is_labeled): 
+
+# !! reorganize here.. DRY!!
 
 	random_cluster =  None
 	current_label = ""
@@ -91,6 +93,29 @@ def get_randomcluster(collname, is_labeled):
 
 
 	return random_cluster, top10, last10, current_label, warning
+
+
+
+def get_step_data(collname, num, page):
+
+	model = get_document(collname)
+
+	tweets = []
+
+	if(page == "Cluster_Them"):
+		for item in model.objects[5:num+5]:
+			for i in item["ctweettuplelist"][:10]:
+					tweets.append(i[2])
+			tweets.append("------------------")
+
+	else:
+		for item in model.objects[5:num+5]:
+			tweets.append(item["text"])
+
+	
+	length = model.objects.count()
+
+	return tweets, length
 
 
 
@@ -236,6 +261,48 @@ class ClusterView(View):
 					'warning' : warning,
 				})
 
+
+
+class HowItWorks(View):
+
+	def get(self, request, page):
+
+		if(page == "Raw_Data"):	
+			tweets, length = get_step_data("testcl", 500, "Raw_Data")
+			current_page = "Raw Data"
+			nextpage = "Eliminate_Retweets"
+			next_step = "Eliminate Retweets"
+
+		elif(page == "Eliminate_Retweets"):
+			tweets, length = get_step_data("rt_eliminated", 500, "Eliminate_Retweets")
+			current_page = "Retweets are Eliminated"
+			nextpage = "Remove_Duplicates"
+			next_step = "Remove Duplicates"
+
+		elif(page == "Remove_Duplicates"):
+			tweets, length = get_step_data("duplicates_eliminated", 500, "Remove_Duplicates")
+			current_page = "Duplicate Tweets are Eliminated"
+			nextpage = "Cluster_Them"
+			next_step = "Cluster Them"
+
+		elif(page == "Cluster_Them"):
+			tweets, length = get_step_data("genocide_clusters_20151005", 10, "Cluster_Them")
+			current_page = "Duplicate Tweets are Eliminated"
+			nextpage = "Label_the_Clusters"
+			next_step = "Label the Clusters"
+
+		elif(page == "Label_the_Clusters"):
+
+			return Home.as_view()(self.request)
+
+
+		return render(request, 'howitworks.html', {	
+				'tweets':tweets,
+				'length':length,
+				'current_page': current_page,
+				'nextpage': nextpage,
+				'next_step': next_step,
+		})
 
 
 class Clustering(View):

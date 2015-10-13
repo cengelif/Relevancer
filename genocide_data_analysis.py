@@ -19,7 +19,7 @@ def eliminate_duplicates_recursively(df, duplicate_elim_func):
         
         tmp_df2 = pd.DataFrame()
         for i in range(0, len(df), 10000):
-            tmp_unique = duplicate_elim_func(df[i:i+1000], similarity_threshold=0.20, debug=True, debug_threshold=10000)
+            tmp_unique = duplicate_elim_func(df[i:i+10000], similarity_threshold=0.20, debug=True, debug_threshold=10000)
             tmp_df2 = pd.concat([tmp_df2, tmp_unique], ignore_index=True)
             
         if len(df) > len(tmp_df2):

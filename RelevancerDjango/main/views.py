@@ -2,6 +2,7 @@
 from django.shortcuts import render
 from django.views.generic import View
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect
 
 from django.conf import settings
 
@@ -293,7 +294,7 @@ class HowItWorks(View):
 
 		elif(page == "Label_the_Clusters"):
 
-			return Home.as_view()(self.request)
+			return HttpResponseRedirect('/')#Home.as_view()(self.request)
 
 
 		return render(request, 'howitworks.html', {	

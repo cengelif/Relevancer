@@ -49,3 +49,8 @@ class genocide_clusters_20151005(Clusters):
 
 	meta = {'collection': 'genocide_clusters_20151005'}
 
+
+class test(Clusters):
+
+	 meta = {'collection': 'test'}
+

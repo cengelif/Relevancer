@@ -306,6 +306,7 @@ class HowItWorks(View):
 		})
 
 
+
 class Clustering(View):
 
 	def get(self, request):
@@ -315,6 +316,17 @@ class Clustering(View):
 
 
 		return Home.as_view()(self.request)
+
+
+
+class About(View):
+
+	
+	def get(self, request):
+
+
+		return render(request, 'about.html', {	
+		})
 
 
 

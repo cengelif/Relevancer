@@ -13,6 +13,8 @@ urlpatterns = patterns('',
 
 	url(r'^clustering$', Clustering.as_view(), name='clustering'),
 
-	url(r'^how_it_works/step:(?P<page>\w+)$', HowItWorks.as_view(), name='howitworks')
+	url(r'^how_it_works/step:(?P<page>\w+)$', HowItWorks.as_view(), name='howitworks'),
+
+	url(r'^about$', About.as_view(), name='about')
 
 )

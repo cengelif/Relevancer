@@ -48,11 +48,17 @@ ul{
 	
 		<h1><a href="{% url 'home' %}">Relevancer</a></h1>
 		
-		<br>	
+		<br>		
 
 		{% block main %}
 		
+		<a href="{% url 'about' %}">About Relevancer</a>	
+				
+		<br>	
+		
 		<!-- a href="{% url 'clustering' %}">Cluster the Tweets</a -->		
+		
+		<br>	
 		
 		<a href="{% url 'howitworks' 'Raw_Data' %}">How Relevancer Works?</a>
 		
@@ -81,7 +87,7 @@ ul{
   				<input type="submit" name="addcollection" value="Add New Collection">
  	 	</form>
  	 	
- 	 	<h6>! WARNING : You need to refresh the page manually after this process</h6>
+ 	 	<h6>! WARNING : You need to open relevancer.science.ru.nl manually after this process (new tab is recommended)</h6>
 
 
 		{% endblock %}

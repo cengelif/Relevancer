@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}About - Relevancer{% endblock %}
+
+
+{% block menu %}	
+		<li ><a href="{% url 'home' %}" accesskey="1" title="">How It Works?</a></li>
+		<li class="active"><a href="{% url 'clustering' %}" accesskey="2" title="">Clusters</a></li>
+		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+{% endblock %}
+
+{% block main %}
+
+		<div class="title">
+			  	<h3>Choose from Available Datasets;</h3>
+		</div>		
+		
+
+		{% if collectionlist %}		
+		
+				<ul>
+					{% for coll in collectionlist %}
+								<li>
+										<b>"{{ coll.0 }}"</b> <br>
+										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
+										<a href="{{ coll.0 }}/unlabeled">Not Labeled</a> <br>
+										<a href="{{ coll.0 }}/labeled">Labeled</a> <br><br>
+								</li>
+					{% endfor %}		
+				</ul>			
+		
+		{% endif %}
+		
+		
+		<form method="post" action="{% url 'home' %}">
+				{% csrf_token %}
+  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br><br>
+  				<input type="submit" name="addcollection" value="Add New Collection">
+ 	 	</form>
+ 	 	
+ 	 	<h6>! WARNING : You need to open relevancer.science.ru.nl manually after this process (new tab is recommended)</h6>
+
+
+
+{% endblock %}

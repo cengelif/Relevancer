@@ -2,19 +2,97 @@
 
 {% block title %}About - Relevancer{% endblock %}
 
+
+{% block menu %}	
+		<li ><a href="{% url 'home' %}" accesskey="1" title="">How It Works?</a></li>
+		<li ><a href="{% url 'clustering' %}" accesskey="2" title="">Clusters</a></li>
+		<li class="active"><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+{% endblock %}
+
+
 {% block main %}
 
-<br>
+<style>
 
-<style>#forkongithub a{background:#000;color:#fff;text-decoration:none;font-family:arial,sans-serif;text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;line-height:2rem;position:relative;transition:0.5s;}#forkongithub a:hover{background:#D7E1F7;color:#000;}#forkongithub a::before,#forkongithub a::after{content:"";width:100%;display:block;position:absolute;top:1px;left:0;height:1px;background:#fff;}#forkongithub a::after{bottom:1px;top:auto;}@media screen and (min-width:800px){#forkongithub{position:fixed;display:block;top:0;left:0;width:200px;overflow:hidden;height:200px;z-index:9999;}#forkongithub a{width:200px;position:absolute;top:60px;left:-60px;transform:rotate(-45deg);-webkit-transform:rotate(-45deg);-ms-transform:rotate(-45deg);-moz-transform:rotate(-45deg);-o-transform:rotate(-45deg);box-shadow:4px 4px 10px rgba(0,0,0,0.8);}}</style>
+#forkongithub a{background:#000;color:#fff;text-decoration:none;font-family:arial,sans-serif;text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;line-height:2rem;position:relative;transition:0.5s;}
+
+#forkongithub a:hover{background:#2056ac;color:#fff;}
+
+#forkongithub a::before,#forkongithub a::after{content:"";width:100%;display:block;position:absolute;top:1px;left:0;height:1px;background:#fff;}
+
+#forkongithub a::after{bottom:1px;top:auto;}
+
+@media screen and (max-width:1px){
+
+	#forkongithub{position:fixed;display:block;top:0;left:0;width:200px;overflow:hidden;height:200px;z-index:9999;}
+
+	#forkongithub a{width:200px;position:absolute;top:60px;left:-60px;}}
+
+</style>
+
+
+<div class="title">
+		  	<h2>About Relevancer</h2>
+</div>
+
 
 
 <span id="forkongithub"><a href="https://github.com/cengelif/Relevancer">Fork me on GitHub</a></span>
 
+<br><br><br><br>
 
+<p>
+Relevancer aims at finding a balance between complexity of a tweet data set
+and expert needs from this data. The clustering step identify samples of the
+information groups that are present in the data set. The expert’s opinion is
+used to annotate selected clusters. As a result, the annotated clusters of tweets
+can be used as they are for further analysis and to build a classifier that can
+label remaining tweets, which were not included in the annotated clusters, and
+any other tweet set in light of the view of the expert.
+The process can be summarized as creating a need based classifier without
+sacrificing precision, information, and time. This process is fast enough to allow
+an expert to be able to repeat the process in case he/she decide to another type
+of annotation/analysis as he/she understand the data set better when he/she
+analyze first clusters.
+Relevancer uses as much as possible features and expert knowledge to allow
+basic and fast algorithms to be applied.
+</p>
 
-
-
+<p>
+Usually, collections of tweets gathered by means of keyword-based queries are
+overly rich in the sense that not all tweets are relevant for a task at hand.
+Making sense of that data for a particular scenario depends on the context
+of the person who needs the information. Since nobody practically has time to
+read the whole of a tweet set, it is advisable to use machine learning to facilitate
+the first information organization steps. In practice, the most useful first step
+is to identify tweets that are clearly irrelevant for a particular task, for instance
+because they are posted by non-human accounts, contain spam, or point to
+another sense of a polysemous keyword used at query time.
+Available systems were designed for certain domains, languages, and use
+cases. Moreover each of them suffers from some combination of the following
+restrictions. First, they are restricted to analyzing tweets that contain at least a
+certain number of well-formed key terms or content words in certain languages.
+Second, they do not take into account tweet characteristics such as emoticons
+and personal language use. Third, they rarely use attributes of a tweet other
+than the text. Finally, they assume the availability of a set of annotators or a
+crowd that is willing to label a sufficient number of tweets.
+We developed our automatic Twitter filtering system Relevancer such that
+it does not suffer from the aforementioned restrictions. Relevancer facilitates
+exploring a tweet data set by dividing the data set into subsets to which the
+annotator can attach labels. Relevancer first employs an unsupervised clustering
+algorithm on a subset of the tweets to explore the structure of the tweet set,
+with explicit distinction of retweets and (near) duplicates. Subsequently, the
+annotator is asked to rate tweet clusters as being relevant and coherent. The
+clustering step is repeated for the remaining tweets until the domain expert
+stops the process, or a predefined target, such as the percentage of labeled tweets
+that should be labeled, is met. The type of clustering algorithm (currently, k-
+means and mini batch k-means are supported), and the annotation candidate
+group selection parameters are automatically adapted based on the size and the
+quality of the output respectively. The labeled tweet groups, the output of the
+unsupervised step, is used as training data for building automatic classifiers that
+can be applied ’in the wild’ to any new tweets gathered with the same query.
+The tool will be demonstrated with its web interface.
+</p>
 
 
 

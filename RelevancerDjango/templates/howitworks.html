@@ -2,8 +2,9 @@
 
 {% block title %}How It Works? - Relevancer{% endblock %}
 
-{% block main %}
 
+
+{% block main %}
 
 <h2>{{ current_page }}</h2>
 
@@ -23,6 +24,7 @@ Next Step : <a href="{% url 'howitworks' nextpage %}">{{ next_step }}</a>
 			</li>
 		{% endfor %}
 	</ul>
+	
 {% endif %}
 
 

@@ -181,36 +181,11 @@ class Home(View):
 
 	def get(self, request):
 				
-		collectionlist = get_collectionlist("info")
-
+		
 		return render(request, 'base.html', {	
-				'collectionlist' : collectionlist,
+
 		})
 
-
-	def post(self, request):
-
-			if "addcollection" in request.POST:				
-
-				newcollection = request.POST['newcollection']
-
-				colllist_obj, colllist = get_collectionlist("update")
-
-				colllist.append(newcollection)
-
-				colllist_obj.update(set__collectionlist = colllist)
-
-
-				with open("main/models.py", "a") as myfile:
-   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': '" + newcollection + "'}\n")
-
-				time.sleep(1) #temporary solution to prevent direct crush
-
-				collectionlist = get_collectionlist("info")
-
-				return render(request, 'base.html', {	
-						'collectionlist' : collectionlist,
-				})
 	
 
 
@@ -310,12 +285,37 @@ class HowItWorks(View):
 class Clustering(View):
 
 	def get(self, request):
+				
+		collectionlist = get_collectionlist("info")
 
-	
-#		genocide_data_analysis.clustering()
+		return render(request, 'clustering.html', {	
+				'collectionlist' : collectionlist,
+		})
 
 
-		return Home.as_view()(self.request)
+	def post(self, request):
+
+			if "addcollection" in request.POST:				
+
+				newcollection = request.POST['newcollection']
+
+				colllist_obj, colllist = get_collectionlist("update")
+
+				colllist.append(newcollection)
+
+				colllist_obj.update(set__collectionlist = colllist)
+
+
+				with open("main/models.py", "a") as myfile:
+   						myfile.write("\nclass " + newcollection + "(Clusters):\n\n\t meta = {'collection': '" + newcollection + "'}\n")
+
+				time.sleep(1) #temporary solution to prevent direct crush
+
+				collectionlist = get_collectionlist("info")
+
+				return render(request, 'base.html', {	
+						'collectionlist' : collectionlist,
+				})
 
 
 

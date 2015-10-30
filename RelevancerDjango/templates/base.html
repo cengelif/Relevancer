@@ -1,103 +1,102 @@
 {% load staticfiles %}
 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+Design by TEMPLATED
+http://templated.co
+Released for free under the Creative Commons Attribution License
 
-<!DOCTYPE html>
-<html>
+Name       : Undeviating 
+Description: A two-column, fixed-width design with dark color scheme.
+Version    : 1.0
+Released   : 20140322
+
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-<link rel="shortcut icon" href="{% static 'favicon' %}" />
+<meta name="keywords" content="relavencer, clustering, classifier" />
+<meta name="description" content="" />
+
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900|Quicksand:400,700|Questrial" rel="stylesheet" />
 
 <link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
 
 <title>{% block title %}Home - Relevancer{% endblock %}</title>
 
 
-<style>
-
-html {
-    color: #222;
-    font-size: 1em;
-    line-height: 1;
-    height:100%;
-	 margin:0;
-	 background-color: #D7E1F7;
-}
-li {
-	padding: 5px 0; 
-	list-style-type:none;	
-}
-
-ul{
-	padding: 0;
-}
-
-{% block css %}{% endblock %}
-
-</style>
-
 
 </head>
-
 <body>
+<div id="header-wrapper">
 
-
-	<div style="text-align:center;">
+	<div id="header" class="container">
 	
-		<br>	
+		<div id="logo">
+        	<!--span class="icon icon-cog"></span-->
+			<h1><a href="{% url 'home' %}">Relevancer</a></h1>
+		</div>
+		
+			
+		<div id="menu">
+			<ul>
+				{% block menu %}	
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">How It Works?</a></li>
+					<li><a href="{% url 'clustering' %}" accesskey="2" title="">Clusters</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+				{% endblock %}
+			</ul>
+		</div>
+		
+	</div>
 	
-		<h1><a href="{% url 'home' %}">Relevancer</a></h1>
-		
-		<br>		
+</div>
+<div class="wrapper">
 
-		{% block main %}
+	<div id="welcome" class="container">
+    	
+    	{% block main %}
+    	
+  		  	<div class="title">
+			  	<h2>How Relevancer Works</h2>
+			</div>
 		
-		<a href="{% url 'about' %}">About Relevancer</a>	
-				
-		<br>	
-		
-		<!-- a href="{% url 'clustering' %}">Cluster the Tweets</a -->		
-		
-		<br>	
-		
-		<a href="{% url 'howitworks' 'Raw_Data' %}">How Relevancer Works?</a>
-		
-		<h4>Choose from Available Datasets;</h4>
-		
+			<p><a href="{% url 'howitworks' 'Raw_Data' %}">Click here to see the steps</a> </p>
 
-		{% if collectionlist %}		
-		
-				<ul>
-					{% for coll in collectionlist %}
-								<li>
-										<b>"{{ coll.0 }}"</b> <br>
-										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
-										<a href="{{ coll.0 }}/unlabeled">Not Labeled</a> <br>
-										<a href="{{ coll.0 }}/labeled">Labeled</a> <br><br>
-								</li>
-					{% endfor %}		
-				</ul>			
-		
-		{% endif %}
-		
-		
-		<form method="post" action="{% url 'home' %}">
-				{% csrf_token %}
-  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br><br>
-  				<input type="submit" name="addcollection" value="Add New Collection">
- 	 	</form>
- 	 	
- 	 	<h6>! WARNING : You need to open relevancer.science.ru.nl manually after this process (new tab is recommended)</h6>
-
-		<br>
-
-		<a href="http://applejack.science.ru.nl/languagemachines/"><img src="{% static 'images/logo-LanguageMachines.png' %}" alt="logo Language Machines"></a>
-
-
+	
 		{% endblock %}
 
 	</div>
-
+	
+</div>
+<div id="footer">
+	<div class="container">
+		<div class="fbox1">
+		<span class="icon icon-map-marker"></span>
+			<span>Address</span>
+		</div>
+		<div class="fbox1">
+			<span class="icon icon-phone"></span>
+			<span>
+				Telephone
+			</span>
+		</div>
+		<div class="fbox1">
+			<span class="icon icon-envelope"></span>
+			<span>Mail</span>
+		</div>
+	</div>
+</div>
+<div id="copyright">
+	<p>&copy; Untitled. All rights reserved. | Photos by <a href="http://fotogrph.com/">Fotogrph</a> | Design by <a href="http://templated.co" rel="nofollow">TEMPLATED</a>.</p>
+	<ul class="contact">
+		<li><a href="#" class="icon icon-twitter"><span>Twitter</span></a></li>
+		<li><a href="#" class="icon icon-facebook"><span></span></a></li>
+		<li><a href="#" class="icon icon-dribbble"><span>Pinterest</span></a></li>
+		<li><a href="#" class="icon icon-tumblr"><span>Google+</span></a></li>
+		<li><a href="#" class="icon icon-rss"><span>Pinterest</span></a></li>
+	</ul>
+</div>
 </body>
-
 </html>

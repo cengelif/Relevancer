@@ -23,11 +23,11 @@ input {
 	
 				{% if last10 %}	
 				
-					<h3>Top Ten Tweets</h3>
+					<h3>Top Ten Tweets</h3><br>
 					
 				{% else %}
 				
-					<h3>All Tweets</h3>				
+					<h3>All Tweets</h3>	<br>			
 					
 				{% endif %}
 				
@@ -41,7 +41,7 @@ input {
 			
 				{% if last10 %}			
 			
-					<h3>Last Ten Tweets</h3>
+					<h3>Last Ten Tweets</h3><br>
 		
 					<ul>
 							{% for tweets in last10 %}

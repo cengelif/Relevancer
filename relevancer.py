@@ -61,9 +61,9 @@ def connect_mongodb(configfile="myconfig.ini", coll_name=None):
 	return rlvdb, rlvcl
 
 # Global variables;
-min_dist_thres = 0.65  # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
-max_dist_thres = 0.85  # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
-target_labeling_ratio = 0.5  # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
+#min_dist_thres = 0.65  # the smallest distance of a tweet to the cluster centroid should not be bigger than that.
+#max_dist_thres = 0.85  # the biggest distance of a tweet to the cluster centroid should not be bigger than that.
+#target_labeling_ratio = 0.5  # percentage of the tweets that should be labeled, until this ratio achieved iteration will repeat automatically.
 # result_collection = "relevancer_result"
 http_re = re.compile(r'https?[^\s]*')
 usr_re = re.compile(r'@[^\s]*')

@@ -35,7 +35,7 @@ def get_randomcluster(collname, is_labeled):
 
 	model = get_document(collname)
 
-	if(is_labeled == "labeled"):
+	if(is_labeled == "True"):
 
 		num_of_clusters = model.objects(label__exists = True).count()
 
@@ -65,7 +65,7 @@ def get_randomcluster(collname, is_labeled):
 			warning = "There is not any labeled cluster yet"
 
 
-	elif(is_labeled == "unlabeled"):
+	elif(is_labeled == "False"):
 
 		num_of_clusters = model.objects(label__exists = False).count()
 
@@ -190,7 +190,7 @@ class Home(View):
 
 
 
-class ClusterView(View):
+class LabelView(View):
 
 	def get(self, request, collname, is_labeled):
 				
@@ -198,7 +198,7 @@ class ClusterView(View):
 
 		labellist = get_labels(collname)
 
-		return render(request, 'cluster.html', {	
+		return render(request, 'label.html', {	
 				'random_cluster' : random_cluster,
 				'top10' : top10,
 				'last10' : last10,
@@ -226,7 +226,7 @@ class ClusterView(View):
 
 				labellist = get_labels(collname)
 
-				return render(request, 'cluster.html', {	
+				return render(request, 'label.html', {	
 					'random_cluster' : random_cluster,
 					'top10' : top10,
 					'last10' : last10,
@@ -243,36 +243,49 @@ class HowItWorks(View):
 
 	def get(self, request, page):
 
+		if(page=="Introduction"):
+			intro = "True"
+			tweets = "" 
+			length = ""
+			current_page = ""
+			nextpage = ""
+			next_step = ""
+
 		if(page == "Raw_Data"):	
+			intro = "False"
 			tweets, length = get_step_data("testcl", 500, "Raw_Data")
 			current_page = "Raw Data"
 			nextpage = "Eliminate_Retweets"
-			next_step = "Eliminate Retweets"
+			next_step = "Eliminate Retweets"			
 
 		elif(page == "Eliminate_Retweets"):
+			intro = "False"
 			tweets, length = get_step_data("rt_eliminated", 500, "Eliminate_Retweets")
 			current_page = "Retweets are Eliminated"
 			nextpage = "Remove_Duplicates"
 			next_step = "Remove Duplicates"
 
 		elif(page == "Remove_Duplicates"):
+			intro = "False"
 			tweets, length = get_step_data("duplicates_eliminated", 500, "Remove_Duplicates")
 			current_page = "Duplicate Tweets are Eliminated"
 			nextpage = "Cluster_Them"
 			next_step = "Cluster Them"
 
 		elif(page == "Cluster_Them"):
+			intro = "False"
 			tweets, length = get_step_data("genocide_clusters_20151005", 10, "Cluster_Them")
-			current_page = "Duplicate Tweets are Eliminated"
+			current_page = "Tweets are Clustered"
 			nextpage = "Label_the_Clusters"
 			next_step = "Label the Clusters"
 
 		elif(page == "Label_the_Clusters"):
 
-			return HttpResponseRedirect('/')#Home.as_view()(self.request)
+			return HttpResponseRedirect('/datasets')#Home.as_view()(self.request)
 
 
-		return render(request, 'howitworks.html', {	
+		return render(request, 'howitworks.html', {
+				'intro':intro,
 				'tweets':tweets,
 				'length':length,
 				'current_page': current_page,
@@ -282,13 +295,13 @@ class HowItWorks(View):
 
 
 
-class Clustering(View):
+class Datasets(View):
 
 	def get(self, request):
 				
 		collectionlist = get_collectionlist("info")
 
-		return render(request, 'clustering.html', {	
+		return render(request, 'datasets.html', {	
 				'collectionlist' : collectionlist,
 		})
 
@@ -313,7 +326,7 @@ class Clustering(View):
 
 				collectionlist = get_collectionlist("info")
 
-				return render(request, 'base.html', {	
+				return render(request, 'datasets.html', {	
 						'collectionlist' : collectionlist,
 				})
 

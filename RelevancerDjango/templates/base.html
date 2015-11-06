@@ -41,9 +41,10 @@ Released   : 20140322
 			
 		<div id="menu">
 			<ul>
-				{% block menu %}	
-					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">How It Works?</a></li>
-					<li><a href="{% url 'clustering' %}" accesskey="2" title="">Clusters</a></li>
+				{% block menu %}
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
 					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
 				{% endblock %}
 			</ul>
@@ -58,11 +59,19 @@ Released   : 20140322
     	
     	{% block main %}
     	
-  		  	<div class="title">
-			  	<h2>How Relevancer Works</h2>
+    		<div class="title">
+				<h2>Welcome to Relevancer Website !</h2>
 			</div>
-		
-			<p><a href="{% url 'howitworks' 'Raw_Data' %}">Click here to see the steps</a> </p>
+			
+			Sitemap;
+			
+			<ul>
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+			</ul>
+  		  	
 
 	
 		{% endblock %}
@@ -70,33 +79,21 @@ Released   : 20140322
 	</div>
 	
 </div>
-<div id="footer">
-	<div class="container">
-		<div class="fbox1">
-		<span class="icon icon-map-marker"></span>
-			<span>Address</span>
-		</div>
-		<div class="fbox1">
-			<span class="icon icon-phone"></span>
-			<span>
-				Telephone
-			</span>
-		</div>
-		<div class="fbox1">
-			<span class="icon icon-envelope"></span>
-			<span>Mail</span>
-		</div>
-	</div>
-</div>
 <div id="copyright">
-	<p>Allrights Reserved</p>
-	<ul class="contact">
-		<li><a href="#" class="icon icon-twitter"><span>Twitter</span></a></li>
-		<li><a href="#" class="icon icon-facebook"><span></span></a></li>
-		<li><a href="#" class="icon icon-dribbble"><span>Pinterest</span></a></li>
-		<li><a href="#" class="icon icon-tumblr"><span>Google+</span></a></li>
-		<li><a href="#" class="icon icon-rss"><span>Pinterest</span></a></li>
-	</ul>
+
+    		<h3>Relevancer is made possible by:</h3>
+    		
+    		<div id="logocontainer">
+
+				<a href="http://applejack.science.ru.nl/languagemachines/"><img src="{% static 'images/logo-LanguageMachines.png' %}" alt="logo Language Machines"></a>
+
+				<a href="http://commit-nl.nl/"><img src="{% static 'images/logo-Commit.png' %}" alt="logo Commit"></a>
+
+				<a href="http://project-infiniti.nl/"><img src="{% static 'images/logo-Infiniti.png' %}" alt="logo Infiniti"></a>
+				
+				<a href="http://www.ru.nl/"><img src="{% static 'images/logo-RU.png' %}" alt="logo Radboud Universiteit"></a>
+
+			</div>
 </div>
 </body>
 </html>

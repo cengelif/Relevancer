@@ -36,6 +36,8 @@
 	{
 		line-height: 180%;
 		padding: 0 100px;
+		text-align: justify;
+    	text-justify: inter-word;
 	}
 	
 	strong
@@ -58,6 +60,27 @@
 		margin: 0px auto;
 		width: 1200px;
 	}
+	
+	
+	
+/*********************************************************************************/
+/* GITHUB BANNER                                                                 */
+/*********************************************************************************/
+	
+	
+#forkongithub a{background:#2056ac;color:#fff;text-decoration:none;font-family:arial,sans-serif;text-align:center;font-weight:bold;padding:5px 40px;font-size:1rem;line-height:2rem;position:relative;transition:0.5s;}
+
+#forkongithub a:hover{background:#000;color:#fff;}
+
+#forkongithub a::before,#forkongithub a::after{content:"";width:100%;display:block;position:absolute;top:1px;left:0;height:1px;background:#fff;}
+
+#forkongithub a::after{bottom:1px;top:auto;}
+
+@media screen and (max-width:1px){
+
+	#forkongithub{position:fixed;display:block;top:0;left:0;width:200px;overflow:hidden;height:200px;z-index:9999;}
+
+	#forkongithub a{width:200px;position:absolute;top:60px;left:-60px;}}
 	
 
 /*********************************************************************************/
@@ -89,6 +112,7 @@
 				position: relative;
 				-webkit-appearance: none;
 				display: block;
+				text-align: center;
 				border: 0;
 				background: #fff;
 				background: rgba(255,255,255,0.75);
@@ -202,51 +226,11 @@
 /* List Styles                                                                   */
 /*********************************************************************************/
 
-	ul.style1
+	ul li
 	{
+		line-height: 1.5em;
 	}
 
-
-/*********************************************************************************/
-/* Social Icon Styles                                                            */
-/*********************************************************************************/
-
-	ul.contact
-	{
-		margin: 0;
-		padding: 2em 0em 0em 0em;
-		list-style: none;
-	}
-	
-	ul.contact li
-	{
-		display: inline-block;
-		padding: 0em 0.10em;
-		font-size: 1em;
-	}
-	
-	ul.contact li span
-	{
-		display: none;
-		margin: 0;
-		padding: 0;
-	}
-	
-	ul.contact li a
-	{
-		color: #FFF;
-	}
-	
-	ul.contact li a:before
-	{
-		display: inline-block;
-		background: #4C93B9;
-		width: 40px;
-		height: 40px;
-		line-height: 40px;
-		text-align: center;
-		color: rgba(255,255,255,1);
-	}
 	
 
 /*********************************************************************************/
@@ -279,9 +263,49 @@
 		color: #272925;
 	}
 	
-	.button-small
-	{
-	}
+
+	
+.myButton {
+	-moz-box-shadow:inset 0px 1px 0px 0px #97c4fe;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #97c4fe;
+	box-shadow:inset 0px 1px 0px 0px #97c4fe;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #3d94f6), color-stop(1, #2055ac));
+	background:-moz-linear-gradient(top, #3d94f6 5%, #2055ac 100%);
+	background:-webkit-linear-gradient(top, #3d94f6 5%, #2055ac 100%);
+	background:-o-linear-gradient(top, #3d94f6 5%, #2055ac 100%);
+	background:-ms-linear-gradient(top, #3d94f6 5%, #2055ac 100%);
+	background:linear-gradient(to bottom, #3d94f6 5%, #2055ac 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#3d94f6', endColorstr='#2055ac',GradientType=0);
+	background-color:#3d94f6;
+	-moz-border-radius:6px;
+	-webkit-border-radius:6px;
+	border-radius:6px;
+	border:1px solid #337fed;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	padding:6px 24px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #1570cd;
+}
+.myButton:hover {
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #2055ac), color-stop(1, #3d94f6));
+	background:-moz-linear-gradient(top, #2055ac 5%, #3d94f6 100%);
+	background:-webkit-linear-gradient(top, #2055ac 5%, #3d94f6 100%);
+	background:-o-linear-gradient(top, #2055ac 5%, #3d94f6 100%);
+	background:-ms-linear-gradient(top, #2055ac 5%, #3d94f6 100%);
+	background:linear-gradient(to bottom, #2055ac 5%, #3d94f6 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#2055ac', endColorstr='#3d94f6',GradientType=0);
+	background-color:#2055ac;
+}
+.myButton:active {
+	position:relative;
+	top:1px;
+}
+
 		
 /*********************************************************************************/
 /* Heading Titles                                                                */
@@ -521,13 +545,10 @@
 
 
 		
-	#footer .fbox1,
-	#footer .fbox2,
-	#footer .fbox3
+	#copyright .fbox
 	{
 		float: left;
-		width: 320px;
-		padding: 0px 40px 0px 40px;
+		padding: 0px 40px;
 	}
 	
 	#footer .icon
@@ -550,16 +571,29 @@
 	#copyright
 	{
 		overflow: hidden;
-		padding: 5em 0em;
+		padding: 3em 0em;
 		border-top: 20px solid rgba(255,255,255,0.08);
 		text-align: center;
 	}
 	
-	#copyright p
+	#copyright a
+	{
+		margin-left: 20px;
+		margin-right: 20px;
+	}	
+	
+	#copyright #logocontainer
+	{
+		width: 1000px;
+		display: table;
+   	margin: 0 auto;
+	}
+	
+	#copyright h3
 	{
 		letter-spacing: 1px;
-		font-size: 0.90em;
 		color: rgba(255,255,255,0.6);
+		margin-bottom: 15px;
 	}
 	
 	#copyright a

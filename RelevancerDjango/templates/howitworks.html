@@ -3,31 +3,104 @@
 {% block title %}How It Works? - Relevancer{% endblock %}
 
 
+{% block menu %}	
+		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+		<li class="active"><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+		<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+{% endblock %}
 
 {% block main %}
 
-<h2>{{ current_page }}</h2><br>
+{% if intro == "True" %}
 
-Number of instances at this point : <b>{{ length }}</b>
+			<div class="title">
+				<h2>How Relevancer Works</h2>
+			</div>
+		
+			<a href="{% url 'howitworks' 'Raw_Data' %}">Click here to see the steps</a> <br><br><br><br>
+			
+			<h3>Retweet Elimination</h3><br>
+			<p>
+			Any tweet that has an indication of being a retweet in the respective field of
+			the tweet JSON file, which is returned by Twitter API for a particular tweet,
+			or has the “rt @” string in the lower cased version of the tweet text is treated
+			as a retweet and eliminated.
+			</p>
 
-<br><br>
+			<h3>Features</h3><br>
+			<p>
+			Anything that occurs in a tweet text is used as a feature in the machine learning
+			algorithms. Tokens are separated based on the punctuation and space charac-
+			ters. Features can be: Hahstags, single letters, numbers, any token that consist
+			of letter and number combinations, and emoticons. Moreover, we preserve case
+			of the text.
+			The aim in using all aforementioned features is to be able capture any nuance
+			that may present in groups of tweets. As a result, we can detect and handle
+			many stylistic and textual characteristics properly.
+			</p>
+			
+			<h3>Near Duplicate Tweet Elimination</h3><br>
+			<p>
+			Near duplicate tweets occur due to implicit retweeting, sharing the same news
+			article and quote among others. Since the focus is not identifying those groups
+			as one group of tweets most of the time and they may restrict ability of the basic
+			algorithms to identify group of related tweets, we eliminate the near duplicate
+			tweet groups. We leave one tweet from this near-duplicate group in the data
+			set. Having a smaller data set at the end, create space for the clustering step
+			to be quick and yield coherent results.
+			If the cosine similarity bigger than 0.8, we assume those tweets as duplicates.
+			In case the memory does not allow to process all tweets, we perform the following
+			steps. First we split the data in buckets of tweets in the size that can be handled
+			quickly and find and eliminate duplicates in each bucket. After that we combine
+			and shuffle the remaining tweets, which are unique in their respective bucket.
+			We repeat that steps until we can not find any duplicate in any bucket.
+			</p>
 
-Next Step : <a href="{% url 'howitworks' nextpage %}">{{ next_step }}</a>
+			<h3>Adaptive Clustering</h3><br>
+			<p>
+			The clustering step aims to identify clusters of tweets that contains related
+			tweets. Finding coherent clusters is not easy with a basic algorithm like K-
+			Means for a big and rich data set. Therefore, we search for good clusters in
+			an adaptive manner. In case the data bigger than a certain number of tweets,
+			which depends on the availability of the memory, we apply MiniBatch K-means.
+			Otherwise, we apply regular KMeans. Parameters of the K-Means are assigned
+			based on the dynamics of the dataset and required number of clusters.
+			The clusters are evaluated based on how close the tweets are to the center
+			of the clusters. A good cluster should contain tweets that are close to the
+			center of the cluster. The closest and the most distant tweets should be close
+			enough to the cluster center and the distance between them should not exceed a
+			certain threshold. Moreover In case an iteration is not resulted with number of
+			required number of clusters, the same method is called recursively by relaxing
+			the threshold parameters based on the proportion of the required clusters and
+			found clusters. Tweets that are in the already selected clusters are preserved as
+			they are and do not included in the next clustering iteration. In case the cluster
+			selection parameters reach to unacceptable threshold values, the clustering will
+			not do any other iteration.
+			</p>
 
-<br><br>
+{% else %}
 
-{% if tweets %}
-	<ul>
-		{% for tweet in tweets %}
-			<li>
-					{{ tweet }}	
-			</li>
-		{% endfor %}
-	</ul>
-	
+	<h2>{{ current_page }}</h2>
+
+	Number of instances at this point : <b>{{ length }}</b>
+
+	<br><br>
+
+	Next Step : <a href="{% url 'howitworks' nextpage %}">{{ next_step }}</a>
+
+	<br><br>
+
+	{% if tweets %}
+		<ul>
+			{% for tweet in tweets %}
+				<li>
+						{{ tweet }}	
+				</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
 {% endif %}
 
-
-
-
-{% endblock %}
+{% endblock %}	

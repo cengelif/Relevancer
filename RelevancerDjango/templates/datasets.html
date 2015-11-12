@@ -25,7 +25,10 @@
 										<b>"{{ coll.0 }}"</b> <br>
 										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
 										<a href="datasets/{{ coll.0 }}/labeled:False">Not Labeled</a> <br>
-										<a href="datasets/{{ coll.0 }}/labeled:True">Labeled</a> <br><br>
+										<a href="datasets/{{ coll.0 }}/labeled:True">Labeled</a> <br>
+										<a href="datasets/{{ coll.0 }}/reset_labels" style="color: #FF0000;" 
+											onclick="return confirm('Are you sure that you want to reset all of the labels?')">
+											Reset All Labels</a> <br><br>
 								</li>
 					{% endfor %}		
 				</ul>			

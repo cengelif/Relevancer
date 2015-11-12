@@ -97,7 +97,7 @@ def get_randomcluster(collname, is_labeled):
 
 
 
-def get_step_data(collname, num, page):
+def get_step_data(collname, num, page=None):
 
 	model = get_document(collname)
 
@@ -138,7 +138,7 @@ def get_labels(collname):
 	labellist = zip(label_set, num_of_cl)	
 
 	return labellist
-
+	
 
 
 def get_collectionlist(choice):
@@ -188,113 +188,6 @@ class Home(View):
 
 	
 
-
-
-class LabelView(View):
-
-	def get(self, request, collname, is_labeled):
-				
-		random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
-
-		labellist = get_labels(collname)
-
-		return render(request, 'label.html', {	
-				'random_cluster' : random_cluster,
-				'top10' : top10,
-				'last10' : last10,
-				'labellist' : labellist, 
-				'collname' : collname,
-				'is_labeled': is_labeled,
-				'current_label' : current_label,
-				'warning' : warning,
-		})
-
-
-	def post(self, request, collname, is_labeled):
-
-			if "addlabel" in request.POST:
-			
-				#Add the label to DB
-				input_label = request.POST['label']
-				cl_id = request.POST['cl_id']
-
-				model = get_document(collname)
-
-				model.objects.get(pk=cl_id).update(set__label = str(input_label))
-				
-				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
-
-				labellist = get_labels(collname)
-
-				return render(request, 'label.html', {	
-					'random_cluster' : random_cluster,
-					'top10' : top10,
-					'last10' : last10,
-					'labellist' : labellist, 
-					'collname' : collname,
-					'is_labeled': is_labeled,
-					'current_label' : current_label,
-					'warning' : warning,
-				})
-
-
-
-class HowItWorks(View):
-
-	def get(self, request, page):
-
-		if(page=="Introduction"):
-			intro = "True"
-			tweets = "" 
-			length = ""
-			current_page = ""
-			nextpage = ""
-			next_step = ""
-
-		if(page == "Raw_Data"):	
-			intro = "False"
-			tweets, length = get_step_data("testcl", 500, "Raw_Data")
-			current_page = "Raw Data"
-			nextpage = "Eliminate_Retweets"
-			next_step = "Eliminate Retweets"			
-
-		elif(page == "Eliminate_Retweets"):
-			intro = "False"
-			tweets, length = get_step_data("rt_eliminated", 500, "Eliminate_Retweets")
-			current_page = "Retweets are Eliminated"
-			nextpage = "Remove_Duplicates"
-			next_step = "Remove Duplicates"
-
-		elif(page == "Remove_Duplicates"):
-			intro = "False"
-			tweets, length = get_step_data("duplicates_eliminated", 500, "Remove_Duplicates")
-			current_page = "Duplicate Tweets are Eliminated"
-			nextpage = "Cluster_Them"
-			next_step = "Cluster Them"
-
-		elif(page == "Cluster_Them"):
-			intro = "False"
-			tweets, length = get_step_data("genocide_clusters_20151005", 10, "Cluster_Them")
-			current_page = "Tweets are Clustered"
-			nextpage = "Label_the_Clusters"
-			next_step = "Label the Clusters"
-
-		elif(page == "Label_the_Clusters"):
-
-			return HttpResponseRedirect('/datasets')#Home.as_view()(self.request)
-
-
-		return render(request, 'howitworks.html', {
-				'intro':intro,
-				'tweets':tweets,
-				'length':length,
-				'current_page': current_page,
-				'nextpage': nextpage,
-				'next_step': next_step,
-		})
-
-
-
 class Datasets(View):
 
 	def get(self, request):
@@ -329,6 +222,130 @@ class Datasets(View):
 				return render(request, 'datasets.html', {	
 						'collectionlist' : collectionlist,
 				})
+
+
+
+class ResetLabels(View):
+
+	def get(self, request, collname):
+
+		model = get_document(collname)
+				
+		model.objects.update(unset__label=1)
+
+		return HttpResponseRedirect('/datasets')
+
+
+
+class Labeling(View):
+
+	def get(self, request, collname, is_labeled):
+				
+		random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+		labellist = get_labels(collname)
+
+		return render(request, 'label.html', {	
+				'random_cluster' : random_cluster,
+				'top10' : top10,
+				'last10' : last10,
+				'labellist' : labellist, 
+				'collname' : collname,
+				'is_labeled': is_labeled,
+				'current_label' : current_label,
+				'warning' : warning,
+		})
+
+
+	def post(self, request, collname, is_labeled):
+
+			if "labeling" in request.POST:
+			
+				#Add the label to DB
+				input_label = request.POST['label']
+				cl_id = request.POST['cl_id']
+
+				model = get_document(collname)
+
+				if(input_label==""):
+
+					model.objects.get(pk=cl_id).update(unset__label = 1)
+
+				else:
+	
+					model.objects.get(pk=cl_id).update(set__label = str(input_label))
+				
+				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+				labellist = get_labels(collname)
+
+				return render(request, 'label.html', {	
+					'random_cluster' : random_cluster,
+					'top10' : top10,
+					'last10' : last10,
+					'labellist' : labellist, 
+					'collname' : collname,
+					'is_labeled': is_labeled,
+					'current_label' : current_label,
+					'warning' : warning,
+				})
+
+
+
+class HowItWorks(View):
+
+	def get(self, request, page):
+
+		if(page=="Introduction"):
+			intro = "True"
+			tweets = "" 
+			length = ""
+			current_page = ""
+			nextpage = ""
+			next_step = ""
+
+		if(page == "Raw_Data"):	
+			intro = "False"
+			tweets, length = get_step_data("testcl", 500)
+			current_page = "Raw Data"
+			nextpage = "Eliminate_Retweets"
+			next_step = "Eliminate Retweets"			
+
+		elif(page == "Eliminate_Retweets"):
+			intro = "False"
+			tweets, length = get_step_data("rt_eliminated", 500)
+			current_page = "Retweets are Eliminated"
+			nextpage = "Remove_Duplicates"
+			next_step = "Remove Duplicates"
+
+		elif(page == "Remove_Duplicates"):
+			intro = "False"
+			tweets, length = get_step_data("duplicates_eliminated", 500)
+			current_page = "Duplicate Tweets are Eliminated"
+			nextpage = "Cluster_Them"
+			next_step = "Cluster Them"
+
+		elif(page == "Cluster_Them"):
+			intro = "False"
+			tweets, length = get_step_data("genocide_clusters_20151005", 10, "Cluster_Them")
+			current_page = "Tweets are Clustered"
+			nextpage = "Label_the_Clusters"
+			next_step = "Label the Clusters"
+
+		elif(page == "Label_the_Clusters"):
+
+			return HttpResponseRedirect('/datasets')#Home.as_view()(self.request)
+
+
+		return render(request, 'howitworks.html', {
+				'intro':intro,
+				'tweets':tweets,
+				'length':length,
+				'current_page': current_page,
+				'nextpage': nextpage,
+				'next_step': next_step,
+		})
+
 
 
 

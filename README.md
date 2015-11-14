@@ -1,5 +1,5 @@
 # Relevancer
-This project is started by Ali Hürriyetoğlu and Elif Türkay from Radboud University Nijmegen and Ron Boortman from Floodtags.
+This project is started by Ali Hürriyetoğlu and Elif Türkay from Radboud University Nijmegen and Ron Boortman from Floodtags. Please visit: http://relevancer.science.ru.nl for more information.
 
 # Relevancer: Finding and Labeling the Structure in a Tweet Set
 

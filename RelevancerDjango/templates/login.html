@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Relevancer{% endblock %}
+
+
+{% block menu %}	
+		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+		<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+		<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+{% endblock %}
+
+
+{% block main %}
+
+	{{ state }}
+	<form action="/login/" method="post">
+		{% csrf_token %}
+		{% if next %}
+		<input type="hidden" name="next" value="{{ next }}" />
+		{% endif %}
+		username: 
+		<input type="text" name="username" value="{{ username}}" /><br />
+		password:
+		<input type="password" name="password" value="" /><br />
+
+		<input type="submit" value="Log In" />
+	</form>
+	
+{% endblock %}

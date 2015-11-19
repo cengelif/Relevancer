@@ -13,12 +13,12 @@ urlpatterns = patterns('',
 
 	url(r'^datasets$', Datasets.as_view(), name='datasets'),
 
+	url(r'^datasets/(?P<collname>\w+)/backup$', Backup.as_view(), name='backup'),
+
 	url(r'^datasets/(?P<collname>\w+)/reset_labels$', ResetLabels.as_view(), name='resetlabels'),
 
 	url(r'^datasets/(?P<collname>\w+)/labeled:(?P<is_labeled>\w+)$', Labeling.as_view(), name='labeling'),
 
 	url(r'^about$', About.as_view(), name='about')
-
-	
 
 )

@@ -37,7 +37,7 @@ elif(which_db == "mongolab_ebasar"):
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 TEMPLATE_DEBUG = False
 
@@ -110,7 +110,7 @@ elif(which_db == "mongolab_ebasar"):
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Amsterdam'
 
 USE_I18N = True
 

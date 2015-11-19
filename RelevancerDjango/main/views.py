@@ -9,8 +9,11 @@ from django.conf import settings
 # Python
 import sys
 sys.path.append('../') # adds 'Relevancer' folder to PYTHONPATH to find relevancer.py etc.
-import random
 import time
+import random
+import logging
+from datetime import datetime
+from bson.json_util import dumps
 
 # DB / models
 import mongoengine
@@ -19,6 +22,15 @@ from mongoengine.base.common import get_document
 
 # Our Own Sources
 #import genocide_data_analysis
+
+
+
+logging.basicConfig(
+		format='%(asctime)s, %(levelname)s: %(message)s',
+		filename='data/relevancer.log',
+		datefmt='%d-%m-%Y, %H:%M',
+		level=logging.INFO)
+
 
 ############################## FUNCTIONS #############################
 
@@ -174,6 +186,23 @@ def get_collectionlist(choice):
 
 
 
+def backup_json(collname):
+
+		currDate = datetime.now().strftime("%d%m%y-%H:%M") 
+
+		filename = collname + "_" + currDate + ".json"
+
+		model = get_document(collname)
+		
+		with open("data/backups/" + filename, 'w') as f:
+			f.write(model.objects.to_json() + '\n')
+
+		logging.info('Backup to ' + filename)
+
+		return 0
+
+
+
 ############################## VIEWS #############################
 
 
@@ -225,13 +254,27 @@ class Datasets(View):
 
 
 
+class Backup(View):
+
+	def get(self, request, collname):
+
+		backup_json(collname)
+
+		return HttpResponseRedirect('/datasets')
+
+
+
 class ResetLabels(View):
 
 	def get(self, request, collname):
 
+		backup_json(collname)
+
 		model = get_document(collname)
 				
 		model.objects.update(unset__label=1)
+
+		logging.info('Reset All Labels.')
 
 		return HttpResponseRedirect('/datasets')
 

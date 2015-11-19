@@ -1,7 +1,13 @@
 
 from django.db import models
 
+from mongoengine.django.auth import User
 from mongoengine import DynamicDocument, ListField, StringField
+
+
+class Profile(User):
+    username = StringField(max_length=50)
+    password = StringField(max_length=50)
 
 
 class CollectionList(DynamicDocument):

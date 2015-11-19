@@ -7,6 +7,8 @@ from main.views import *
 
 urlpatterns = patterns('',
 
+	url(r'^login/$', 'main.views.login_user'),
+
 	url(r'^$', Home.as_view(), name='home'),
 
 	url(r'^how_it_works/step:(?P<page>\w+)$', HowItWorks.as_view(), name='howitworks'),

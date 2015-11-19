@@ -4,6 +4,8 @@ from django.views.generic import View
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 
+from django.contrib.auth import authenticate, login
+
 from django.conf import settings
 
 # Python
@@ -215,7 +217,29 @@ class Home(View):
 
 		})
 
-	
+def login_user(request):
+    state = "Please log in below..."
+    username = password = ''
+    if request.POST:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                state = "You're successfully logged in!"
+            else:
+                state = "Your account is not active, please contact the site admin."
+        else:
+            state = "Your username and/or password were incorrect."
+
+    return render(request, 'login.html',{
+			'state':state, 'username': username
+	})
+
+
+
 
 class Datasets(View):
 
@@ -258,9 +282,14 @@ class Backup(View):
 
 	def get(self, request, collname):
 
-		backup_json(collname)
+		if request.user.is_authenticated():
+			
+			backup_json(collname)
 
-		return HttpResponseRedirect('/datasets')
+			return HttpResponseRedirect('/datasets')
+		else:
+			return HttpResponseRedirect('/login')
+					
 
 
 

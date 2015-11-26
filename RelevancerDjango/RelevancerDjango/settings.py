@@ -37,7 +37,7 @@ elif(which_db == "mongolab_ebasar"):
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = False
 

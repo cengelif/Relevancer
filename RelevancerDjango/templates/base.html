@@ -1,99 +1,103 @@
 {% load staticfiles %}
 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+Design by TEMPLATED
+http://templated.co
+Released for free under the Creative Commons Attribution License
 
-<!DOCTYPE html>
-<html>
+Name       : Undeviating 
+Description: A two-column, fixed-width design with dark color scheme.
+Version    : 1.0
+Released   : 20140322
+
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-<link rel="shortcut icon" href="{% static 'favicon' %}" />
+<meta name="keywords" content="relavencer, clustering, classifier" />
+<meta name="description" content="" />
+
+<script src="{% static 'jquery/jquery-1.11.1.min.js' %}"></script>
+
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900|Quicksand:400,700|Questrial" rel="stylesheet" />
 
 <link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
 
 <title>{% block title %}Home - Relevancer{% endblock %}</title>
 
 
-<style>
-
-html {
-    color: #222;
-    font-size: 1em;
-    line-height: 1;
-    height:100%;
-	 margin:0;
-	 background-color: #D7E1F7;
-}
-li {
-	padding: 5px 0; 
-	list-style-type:none;	
-}
-
-ul{
-	padding: 0;
-}
-
-{% block css %}{% endblock %}
-
-</style>
-
 
 </head>
-
 <body>
+<div id="header-wrapper">
 
-
-	<div style="text-align:center;">
+	<div id="header" class="container">
 	
-		<br>	
+		<div id="logo">
+        	<!--span class="icon icon-cog"></span-->
+			<h1><a href="{% url 'home' %}">Relevancer</a></h1>
+		</div>
+		
+			
+		<div id="menu">
+			<ul>
+				{% block menu %}
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+				{% endblock %}
+			</ul>
+		</div>
+		
+	</div>
 	
-		<h1><a href="{% url 'home' %}">Relevancer</a></h1>
-		
-		<br>		
+</div>
+<div class="wrapper">
 
-		{% block main %}
-		
-		<a href="{% url 'about' %}">About Relevancer</a>	
-				
-		<br>	
-		
-		<!-- a href="{% url 'clustering' %}">Cluster the Tweets</a -->		
-		
-		<br>	
-		
-		<a href="{% url 'howitworks' 'Raw_Data' %}">How Relevancer Works?</a>
-		
-		<h4>Choose from Available Datasets;</h4>
-		
+	<div id="welcome" class="container">
+    	
+    	{% block main %}
+    	
+    		<div class="title">
+				<h2>Welcome to Relevancer Website !</h2>
+			</div>
+			
+			Sitemap;
+			
+			<ul>
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+			</ul>
+  		  	
 
-		{% if collectionlist %}		
-		
-				<ul>
-					{% for coll in collectionlist %}
-								<li>
-										<b>"{{ coll.0 }}"</b> <br>
-										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
-										<a href="{{ coll.0 }}/unlabeled">Not Labeled</a> <br>
-										<a href="{{ coll.0 }}/labeled">Labeled</a> <br><br>
-								</li>
-					{% endfor %}		
-				</ul>			
-		
-		{% endif %}
-		
-		
-		<form method="post" action="{% url 'home' %}">
-				{% csrf_token %}
-  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br><br>
-  				<input type="submit" name="addcollection" value="Add New Collection">
- 	 	</form>
- 	 	
- 	 	<h6>! WARNING : You need to open relevancer.science.ru.nl manually after this process (new tab is recommended)</h6>
-
-
+	
 		{% endblock %}
 
 	</div>
+	
+</div>
+<div id="copyright">
 
+    		<h3>Relevancer is made possible by:</h3>
+    		
+    		<div id="logocontainer">
+
+				<a href="http://applejack.science.ru.nl/languagemachines/"><img src="{% static 'images/logo-LanguageMachines.png' %}" alt="logo Language Machines"></a>
+
+				<a href="http://www.floodtags.com/"><img src="{% static 'images/logo-floodtags.png' %}" alt="logo FloodTags"></a>
+
+				<a href="http://commit-nl.nl/"><img src="{% static 'images/logo-Commit.png' %}" alt="logo Commit"></a>
+
+				<a href="http://project-infiniti.nl/"><img src="{% static 'images/logo-Infiniti.png' %}" alt="logo Infiniti"></a>
+				
+				<a href="http://www.ru.nl/"><img src="{% static 'images/logo-RU.png' %}" alt="logo Radboud Universiteit"></a>
+
+			</div>
+</div>
 </body>
-
 </html>

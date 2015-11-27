@@ -6,8 +6,12 @@ __pycache__/
 *.ini
 *.pickle
 *.pid
+*.json
+backups/
 
+# Virtual Environments
 relenv/
+envrel/
 
 #Ipython Notebook
 .ipynb_checkpoints

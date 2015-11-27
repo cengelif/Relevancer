@@ -1,0 +1,109 @@
+{% extends "datasets.html" %}
+
+{% block title %}Cluster - Relevancer{% endblock %}
+
+
+{% block main %}
+				
+				
+		{% if random_cluster %}
+	
+				{% if last10 %}	
+				
+					<h3>Top Ten Tweets</h3>
+					
+				{% else %}
+				
+					<h3>All Tweets</h3>				
+					
+				{% endif %}
+				
+				<ul>
+						{% for tweets in top10 %}
+								<li>
+										{{ tweets }}	
+								</li>
+						{% endfor %}
+				</ul>
+			
+				{% if last10 %}			
+			
+					<h3>Last Ten Tweets</h3>
+		
+					<ul>
+							{% for tweets in last10 %}
+									<li>
+											{{ tweets }}	
+									</li>
+							{% endfor %}
+					</ul>
+				
+				{% endif %}
+		
+
+				{% if labellist %}
+				
+					<br><br>	
+					The labels used before in this collection (and how many times they are used) :				
+
+					<ul>
+							{% for label in labellist %}
+									<li>
+											<a href="" onclick="document.addlabelform.label.value='{{ label.0 }}';return false;" >
+														<b>{{ label.0 }}</b></a> ({{ label.1 }})	
+									</li>
+							{% endfor %}
+					</ul>
+					
+				{% endif %}
+				
+				
+				{% if is_labeled == "False" %}
+
+					Type the label for this cluster;<br><br>
+
+					<form method="post" name="addlabelform" action="{% url 'labeling' collname is_labeled %}">
+							{% csrf_token %}
+							<input type="text" name="cl_id" value="{{ random_cluster.id }}" placeholder="{{ random_cluster.id }}" style="display: none;" readonly><br>
+  							<input type="text" name="label"  placeholder="Write your label here" required pattern="\S+"/><br><br>
+  							<input type="submit" name="labeling" value="Add Label">
+ 	 				</form>
+
+
+				{% elif is_labeled == "True" %}
+				
+
+					Current label for this cluster : <b>{{ current_label }}</b> <br><br>
+				
+				
+					Type the label for this cluster;<br><br>
+				
+					<form method="post" name="addlabelform" action="{% url 'labeling' collname is_labeled %}">
+							{% csrf_token %}
+							<input type="text" name="cl_id" value="{{ random_cluster.id }}" placeholder="{{ random_cluster.id }}" style="display: none;"  readonly><br>
+  							<input type="text" name="label" id= "label"  placeholder="Write your label here" required pattern="\S+"><br><br>
+  							<input type="submit" name="labeling" value="Change Label">
+  							<input type="submit" name="labeling" value="Remove Label" formnovalidate 
+  									 onclick="return confirm('Are you sure that you want to remove this label? : {{ current_label }}')">
+ 	 				</form>				
+				
+  		
+  				{% endif %}	
+  				
+  				
+  				<br>
+  				
+  				<a href="{% url 'labeling' collname is_labeled %}">
+							<button type="button">Skip this cluster</button></a>
+
+  				<br><br>
+	
+
+		{% else %}
+			
+				{{ warning }}	
+			
+			
+		{% endif %}	
+
+{% endblock %}

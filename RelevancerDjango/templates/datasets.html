@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}About - Relevancer{% endblock %}
+
+
+{% block menu %}	
+		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+		<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+		<li class="active"><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+{% endblock %}
+
+{% block main %}
+
+		<div class="title">
+			  	<h3>Choose from Available Datasets;</h3>
+		</div>		
+		
+
+		{% if collectionlist %}		
+		
+				<ul>
+					{% for coll in collectionlist %}
+								<li>
+										<b>"{{ coll.0 }}"</b> <br>
+										{{ coll.1 }} clusters in total <br> {{ coll.2 }} not labeled yet, {{ coll.3 }} already labeled<br>
+										<a href="datasets/{{ coll.0 }}/labeled:False">Not Labeled</a> <br>
+										<a href="datasets/{{ coll.0 }}/labeled:True">Labeled</a> <br>
+										<a href="datasets/{{ coll.0 }}/backup" style="color: #006600;" 
+											onclick="return confirm('This may take a while.')">
+											Backup to JSON</a> <br>
+										<a href="datasets/{{ coll.0 }}/reset_labels" style="color: #FF0000;" 
+											onclick="return confirm('Are you sure that you want to reset all of the labels? This may take a while.')">
+											Reset All Labels</a> <br><br>
+								</li>
+					{% endfor %}		
+				</ul>			
+		
+		{% endif %}
+		
+		
+		<!-- form method="post" action="{% url 'home' %}">
+				{% csrf_token %}
+  				<input type="text" name="newcollection"  placeholder="write collection name here" required/><br><br>
+  				<input type="submit" name="addcollection" value="Add New Collection">
+ 	 	</form>
+ 	 	
+ 	 	<h6>! WARNING : You need to open relevancer.science.ru.nl manually after this process (new tab is recommended)</h6-->
+
+
+
+{% endblock %}

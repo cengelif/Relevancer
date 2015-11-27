@@ -585,9 +585,9 @@
 	
 	#copyright #logocontainer
 	{
-		width: 1000px;
+		width: 100%;
 		display: table;
-   	margin: 0 auto;
+   		margin: 0 auto;
 	}
 	
 	#copyright h3

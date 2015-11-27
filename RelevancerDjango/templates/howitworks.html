@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}How It Works? - Relevancer{% endblock %}
+{% block title %}How Does It Work? - Relevancer{% endblock %}
 
 
 {% block menu %}	
 		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
-		<li class="active"><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How It Works?</a></li>
+		<li class="active"><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
 		<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
 		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
 {% endblock %}
@@ -15,7 +15,7 @@
 {% if intro == "True" %}
 
 			<div class="title">
-				<h2>How Relevancer Works</h2>
+				<h2>How Does Relevancer Work?</h2>
 			</div>
 		
 			<a href="{% url 'howitworks' 'Raw_Data' %}">Click here to see the steps</a> <br><br><br><br>
@@ -81,7 +81,7 @@
 
 {% else %}
 
-	<h2>{{ current_page }}</h2>
+	<h2>{{ current_page }}</h2><br>
 
 	Number of instances at this point : <b>{{ length }}</b>
 

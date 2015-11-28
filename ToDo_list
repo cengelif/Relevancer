@@ -11,6 +11,8 @@ ToDo:
 
 - We should include non-text based features. Length of a tweet should be taken into account. I will check some references about that.
 
+- Update the main page of the GitHub page. Provide examples about how to run it. After a while we should have setup mechanism for the tool too.
+
 
 - silhouette score can be provided with an explanation.
 - Write each group to text files.

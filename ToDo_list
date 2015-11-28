@@ -2,6 +2,16 @@
 
 
 ToDo:
+- Extract punctuation mark combinations that are used to express an emoticon. 
+
+"Hi I am Ali :))" -> The token ":))" should be extracted as a feature, at least as ":)".
+
+- Does bigram extraction ignore punctuation marks? In principle, a bigram should be created only if there is a space between two words, even \t and \n should not be allowed.
+ "Hey, how are you doing? Are you OK?" -> Bigrams should not contain: "hey how" and "doing Are".
+
+- We should include non-text based features. Length of a tweet should be taken into account. I will check some references about that.
+
+
 - silhouette score can be provided with an explanation.
 - Write each group to text files.
 - while writing to the file: write remaining tweets as "rest".
@@ -26,7 +36,6 @@ ToDo:
 - try not to use Global variables, check!
 - Make Relevancer Object Oriented!
 - Write test cases for each method.
-- Use proper min() and max() methods when comparing the thresholds for closest and farthest distances from the cluster centers. Using first and last tweets after a sort is risky.
 
 - Do more sophisticated cluster selection. If most of the tweets are close to the center, ignore the tail, use the
 majority of the tweets. Use statistical tests for skewness. You can use %75 %25 quntiles.
@@ -52,19 +61,7 @@ first %25, second, etc. So the cluster selection can be optimized.
 
 On the web interface put options for: Identify & Show retweets, Identify & Show Near-Duplicates, Upload tweets, Download group 
 
-"dataframe info:None" satırına kontrol gerekiyor.
 
-10 binlik datada "27-08-2015, 14:54,560 root INFO Number of features:56" satire wok az geldi gözüme. Kontrol etmeli. Ki kalan tweet sayısını da yazsak: "The data set is small enough to use Kmeans" civarına.
-
-"In scikit-learn pairwise distance, we use different parameters for different distances that are defined in 'allowed_metrics'." şurada hang parametrelerin kabul edildiğini de yazsak, vey dökümantasyondaki nerve bakılabileceğine referans versek.
-
-"End of the "scikit-learn pairwise distance"." Bunun sonuna hangi ölçütün kullanıldığını yazsak, tam olur.
-
-Neden "number of features" hep, tüm tweet setlerde 56?
-
-RT'ler ve URL'ler tam işlenmiyor gibime geldi. Şu featurelar şüpheli: 'co mLaTESfunR' --> url, 'RT @OliverMathenge' --> RT
-
-User isimlerini de mi normalize etsek, "@cilginTweetci" gibilerini standard bi isme: "xxUserxx" gibi.. Yoksa çok kirlilik oluşturuyorlar sanki.
 
 Decisions:
 - Should we eliminate RTs: The default should be YES.
@@ -74,6 +71,7 @@ Decisions:
 - Should we eliminate tweets that contain only one normal word (.alpha())? It can be an option.: No, use other clues as well!
 - For test tweets do the preprocessing via transform() method of tfidfvectorizer not fit_transform().
 - n_clusters, for k should be assigned automatically at the beginning.
+- We normalize the user names and the urls to one token each.
 
 
 """

@@ -13,6 +13,13 @@ ToDo:
 
 - Update the main page of the GitHub page. Provide examples about how to run it. After a while we should have setup mechanism for the tool too.
 
+- We need to have a test suite for it.
+
+_ We can use the Github issue tracker more.
+
+- how can you verify that the feature extraction step take almost all emoticons into account?
+
+
 
 - silhouette score can be provided with an explanation.
 - Write each group to text files.
@@ -27,7 +34,6 @@ ToDo:
 - If the data is too big, process/annotate a certain amount of it. Read the rest as you have less data in the memory. As you
   have labeled data, you can create a classifier from the labeled data and help the annotator.
 - we need to have tests and proper sw package structure (check the project cookie clutter)
-- how can you verify that the feature extraction step take almost all emoticons into account?
 - implement implicit evaluation: same users/hashtags should be consistently under the same label.
 - cluster users/hashtags based on users/hashtags
 - include summary of a hashtag/user information in the cluster summary. Which information can be useful?
@@ -65,7 +71,7 @@ On the web interface put options for: Identify & Show retweets, Identify & Show 
 
 
 
-Decisions:
+Design Decisions:
 - Should we eliminate RTs: The default should be YES.
 - Numbers are used as features
 - if a clustering does not provide any candidate, change the thresholds in the next iteration!

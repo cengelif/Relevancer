@@ -188,7 +188,7 @@ def get_collectionlist(choice):
 
 def backup_json(collname):
 
-		currDate = datetime.now().strftime("%d%m%y-%H:%M") 
+		currDate = datetime.now().strftime("%y%m%d-%H:%M") 
 
 		filename = collname + "_" + currDate + ".json"
 

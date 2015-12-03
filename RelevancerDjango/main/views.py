@@ -3,12 +3,16 @@ from django.shortcuts import render
 from django.views.generic import View
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from django.conf import settings
 
 # Python
+import re
+import os
 import sys
 sys.path.append('../') # adds 'Relevancer' folder to PYTHONPATH to find relevancer.py etc.
+import json
 import time
 import random
 import logging
@@ -20,6 +24,7 @@ from bson.json_util import dumps
 import mongoengine
 from main.models import * # Clusters, CollectionList (Have to import everything(with star) because the models can be added dynamically)
 from mongoengine.base.common import get_document
+import pymongo
 
 # Our Own Sources
 #import genocide_data_analysis
@@ -206,6 +211,39 @@ def backup_json(collname):
 		return 0
 
 
+def loadbackup(filename):
+
+	collname = re.findall('(.*)_\d{6}-\d\d:\d\d.json', filename)[0]
+
+	db_name = config.get('db', 'db_name')
+
+	backup_json(collname)
+	print("backup")
+
+	client = pymongo.MongoClient("127.0.0.1", 27017)
+	localdb = client[db_name]
+	local_col = localdb[collname]
+	print("connected")
+
+	with open("data/backups/" + filename) as f:
+		cluster_list = json.load(f)
+	print("loaded")
+
+	for element in cluster_list: 
+		del element['_id'] 
+	print("idremoved")
+
+	local_col.remove()
+	print("removed")
+
+	local_col.insert(cluster_list)
+	print("inserted")
+
+	return 0
+
+
+
+
 
 ############################## VIEWS #############################
 
@@ -264,6 +302,37 @@ class Backup(View):
 
 		backup_json(collname)
 
+		url = reverse('listbackups', kwargs={'collname': collname})
+		
+		return HttpResponseRedirect(url)
+
+
+
+class ListBackups(View):
+
+	def get(self, request, collname):
+
+		filelist = []
+
+		for file in os.listdir("data/backups/"):
+			if file.startswith(collname):
+				filelist.append(file)
+
+		filelist.sort(reverse=True)
+
+		return render(request, 'loadback.html', {	
+				'collname' : collname,
+				'filelist' : filelist,
+		})		
+
+
+
+class LoadBack(View):
+
+	def get(self, request, filename):
+
+		loadbackup(filename)
+
 		return HttpResponseRedirect('/datasets')
 
 
@@ -319,7 +388,7 @@ class ResetLabels(View):
 
 class Labeling(View):
 
-	def get(self, request, collname, is_labeled):
+	def get(self, request, collname,  is_labeled):
 				
 		random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 

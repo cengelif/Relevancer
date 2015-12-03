@@ -1,0 +1,38 @@
+{% extends "datasets.html" %}
+
+{% block title %}Backups - Relevancer{% endblock %}
+
+
+{% block main %}
+				
+				
+		{% if filelist %}			
+			
+			<h3>Backup Files</h3><br>
+			
+			<h4>Choose one of them to load it back.</h4>
+		
+			<ul>
+			{% for filename in filelist %}
+					<li>
+							<a href="/datasets/{{ filename }}/loadback" 
+							onclick="return confirm('This may take a while.')">
+							{{ filename }}</a>
+					</li>
+			{% endfor %}
+			</ul>
+		
+			
+		{% else %}
+		
+			<h4>There is not any backup file for '{{ collname }}'</h4>
+			
+			<br>
+			
+			<h3><a href="/datasets/{{ collname }}/backup" style="color: #006600;">
+				Backup one now...</a></h3> (This may take a while)	<br>
+				
+		{% endif %}
+	
+
+{% endblock %}

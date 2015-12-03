@@ -5,7 +5,7 @@
 
 {% block menu %}	
 		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
-		<li class="active"><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+		<li class="active"><a href="{% url 'howdoesitwork' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
 		<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
 		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
 {% endblock %}
@@ -18,7 +18,7 @@
 				<h2>How Does Relevancer Work?</h2>
 			</div>
 		
-			<a href="{% url 'howitworks' 'Raw_Data' %}">Click here to see the steps</a> <br><br><br><br>
+			<a href="{% url 'howdoesitwork' 'Raw_Data' %}">Click here to see the steps</a> <br><br><br><br>
 			
 			<h3>Retweet Elimination</h3><br>
 			<p>
@@ -87,7 +87,7 @@
 
 	<br><br>
 
-	Next Step : <a href="{% url 'howitworks' nextpage %}">{{ next_step }}</a>
+	Next Step : <a href="{% url 'howdoesitwork' nextpage %}">{{ next_step }}</a>
 
 	<br><br>
 

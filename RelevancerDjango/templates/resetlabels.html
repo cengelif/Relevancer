@@ -1,0 +1,43 @@
+{% extends "datasets.html" %}
+
+{% block title %}Reset Labels - Relevancer{% endblock %}
+
+
+{% block main %}
+
+
+		{% if confirmed %}
+		
+		<script type="text/javascript">
+      	  setTimeout(function() {
+         	   window.location.href = "/datasets";
+        		}, 7000);
+		</script>
+		
+		
+		<h3>Password is correct. <br>All labels are successfully removed from <a style="color: #0000FF;">'{{ collname }}'</a></h3>
+		
+		<h4>Redirecting to Datasets...</h4>
+		
+		
+		{% else %}
+		
+		
+		<h3>You are about to reset all labels for <a style="color: #0000FF;">'{{ collname }}'</a></h3>
+		<h4>Please submit your password to reset labels;</h4>
+	
+		<h5><a style="color: #FF0000;">{{ denied_msg }}</a></h5>
+		
+		<form method="post" name="confirmpassform" action="{% url 'resetlabels' collname %}">
+				{% csrf_token %}
+  				<input type="text" name="user_pass"  placeholder="write your password here" required/><br><br>
+  				<input type="submit" name="confirmpass" value="Reset All Labels" onclick="return confirm('Are you sure that you want to reset all of the labels? This may take a while.')">
+ 	 	</form>
+ 	 	
+ 	 	
+ 	 	{% endif %}
+	
+
+
+
+{% endblock %}

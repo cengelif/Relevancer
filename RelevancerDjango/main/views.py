@@ -12,6 +12,7 @@ sys.path.append('../') # adds 'Relevancer' folder to PYTHONPATH to find relevanc
 import time
 import random
 import logging
+import configparser
 from datetime import datetime
 from bson.json_util import dumps
 
@@ -24,6 +25,9 @@ from mongoengine.base.common import get_document
 #import genocide_data_analysis
 
 
+config = configparser.ConfigParser()
+
+config.read("data/auth.ini")
 
 logging.basicConfig(
 		format='%(asctime)s, %(levelname)s: %(message)s',
@@ -268,15 +272,48 @@ class ResetLabels(View):
 
 	def get(self, request, collname):
 
-		backup_json(collname)
 
-		model = get_document(collname)
-				
-		model.objects.update(unset__label=1)
+		return render(request, 'resetlabels.html', {	
+				'collname' : collname,
+		})
 
-		logging.info('Reset All Labels.')
 
-		return HttpResponseRedirect('/datasets')
+	def post(self, request, collname):
+
+			if "confirmpass" in request.POST:				
+
+				user_pass = request.POST['user_pass']
+
+				reset_pass = config.get('dataset', 'reset_pass')
+
+				if(user_pass == reset_pass):
+
+					backup_json(collname)
+	
+					model = get_document(collname)
+					
+					model.objects.update(unset__label=1)
+
+					logging.info('Reset All Labels.')
+
+					confirmed = True
+
+					return render(request, 'resetlabels.html', {	
+							'collname' : collname,
+							'confirmed' : confirmed,
+					})
+
+				else:
+
+					confirmed = False
+
+					denied_msg = "Wrong password. Please try again."
+
+					return render(request, 'resetlabels.html', {	
+							'collname' : collname,
+							'confirmed' : confirmed,
+							'denied_msg' : denied_msg,
+					})
 
 
 

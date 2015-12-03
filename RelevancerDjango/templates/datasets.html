@@ -5,7 +5,7 @@
 
 {% block menu %}	
 		<li><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
-		<li><a href="{% url 'howitworks' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+		<li><a href="{% url 'howdoesitwork' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
 		<li class="active"><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
 		<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
 {% endblock %}
@@ -29,8 +29,7 @@
 										<a href="datasets/{{ coll.0 }}/backup" style="color: #006600;" 
 											onclick="return confirm('This may take a while.')">
 											Backup to JSON</a> <br>
-										<a href="datasets/{{ coll.0 }}/reset_labels" style="color: #FF0000;" 
-											onclick="return confirm('Are you sure that you want to reset all of the labels? This may take a while.')">
+										<a href="datasets/{{ coll.0 }}/reset_labels" style="color: #FF0000;">
 											Reset All Labels</a> <br><br>
 								</li>
 					{% endfor %}		

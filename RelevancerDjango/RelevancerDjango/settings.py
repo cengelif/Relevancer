@@ -16,6 +16,8 @@ import mongoengine
 import configparser
 
 
+HOSTNAME = os.uname()[1]
+
 which_db = "localdb" #current options: localdb, mongolab_ebasar 
 
 
@@ -36,10 +38,19 @@ elif(which_db == "mongolab_ebasar"):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config.get('rel_settings', 'secret_key')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
 
-TEMPLATE_DEBUG = False
+if HOSTNAME[:9] == "applejack":		#to work on the server
+	DEBUG = False
+	TEMPLATE_DEBUG = False
+else:								#to work on local
+	DEBUG = True
+	TEMPLATE_DEBUG = False
+
+
+# SECURITY WARNING: don't run with debug turned on in production!
+#DEBUG = False
+
+#TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']
 

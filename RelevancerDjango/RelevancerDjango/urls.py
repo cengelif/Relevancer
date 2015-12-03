@@ -9,7 +9,7 @@ urlpatterns = patterns('',
 
 	url(r'^$', Home.as_view(), name='home'),
 
-	url(r'^how_it_works/step:(?P<page>\w+)$', HowItWorks.as_view(), name='howitworks'),
+	url(r'^how_does_it_work/step:(?P<page>\w+)$', HowItWorks.as_view(), name='howdoesitwork'),
 
 	url(r'^datasets$', Datasets.as_view(), name='datasets'),
 

@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views.generic import View
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
+from django.http import HttpRequest  
 from django.core.urlresolvers import reverse
 
 from django.conf import settings
@@ -197,18 +198,19 @@ def get_collectionlist(choice):
 
 def backup_json(collname):
 
-		currDate = datetime.now().strftime("%y%m%d-%H:%M") 
+	currDate = datetime.now().strftime("%y%m%d-%H:%M") 
 
-		filename = collname + "_" + currDate + ".json"
+	filename = collname + "_" + currDate + ".json"
 
-		model = get_document(collname)
+	model = get_document(collname)
 		
-		with open("data/backups/" + filename, 'w') as f:
-			f.write(model.objects.to_json() + '\n')
+	with open("data/backups/" + filename, 'w') as f:
+		f.write(model.objects.to_json() + '\n')
 
-		logging.info('Backup to ' + filename)
+	logging.info('BACKUP : Backup to ' + filename)
 
-		return 0
+	return 0
+
 
 
 def loadbackup(filename):
@@ -218,28 +220,30 @@ def loadbackup(filename):
 	db_name = config.get('db', 'db_name')
 
 	backup_json(collname)
-	print("backup")
 
 	client = pymongo.MongoClient("127.0.0.1", 27017)
 	localdb = client[db_name]
 	local_col = localdb[collname]
-	print("connected")
 
 	with open("data/backups/" + filename) as f:
 		cluster_list = json.load(f)
-	print("loaded")
 
 	for element in cluster_list: 
 		del element['_id'] 
-	print("idremoved")
 
 	local_col.remove()
-	print("removed")
 
 	local_col.insert(cluster_list)
-	print("inserted")
 
 	return 0
+
+
+
+def get_client_ip(request):
+    ip = request.META.get('HTTP_CF_CONNECTING_IP')
+    if ip is None:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 
@@ -300,11 +304,57 @@ class Backup(View):
 
 	def get(self, request, collname):
 
-		backup_json(collname)
+		action = 'backup'
+		event = 'create a new backup file for '
 
-		url = reverse('listbackups', kwargs={'collname': collname})
-		
-		return HttpResponseRedirect(url)
+		return render(request, 'confirmpass.html', {	
+				'action': action,
+				'event' : event,
+				'thing' : collname,
+		})
+
+	def post(self, request, collname):
+
+			if "confirmpass" in request.POST:				
+
+				user_pass = request.POST['user_pass']
+
+				reset_pass = config.get('dataset', 'reset_pass')
+
+				if(user_pass == reset_pass):
+
+					client_address = get_client_ip(request)
+
+					logging.info('BACKUP : ' + client_address + ' requested to backup ' + collname)
+
+					backup_json(collname)
+
+					logging.info('BACKUP : Backup done with ' + collname + ', by ' + client_address)
+
+					confirmed = True
+
+					result = 'Backup is successfully created for : '
+
+					return render(request, 'confirmpass.html', {	
+							'thing' : collname,
+							'confirmed' : confirmed,
+							'result' : result,
+					})
+
+				else:
+
+					confirmed = False
+					action = 'backup'
+					event = 'create a new backup file for '
+					denied_msg = "Wrong password. Please try again."
+
+					return render(request, 'confirmpass.html', {	
+							'action': action,
+							'event' : event,
+							'thing' : filename,
+							'confirmed' : confirmed,
+							'denied_msg' : denied_msg,
+					})
 
 
 
@@ -331,9 +381,59 @@ class LoadBack(View):
 
 	def get(self, request, filename):
 
-		loadbackup(filename)
+		action = 'loadback'
+		event = 'load the database backup on'
 
-		return HttpResponseRedirect('/datasets')
+		return render(request, 'confirmpass.html', {	
+				'action': action,
+				'event' : event,
+				'thing' : filename,
+		})
+
+
+	def post(self, request, filename):
+
+			if "confirmpass" in request.POST:				
+
+				user_pass = request.POST['user_pass']
+
+				reset_pass = config.get('dataset', 'reset_pass')
+
+				if(user_pass == reset_pass):
+
+					client_address = get_client_ip(request)
+
+					logging.info('LOAD : ' + client_address + ' requested to load ' + filename)
+
+					loadbackup(filename)
+
+					logging.info('LOAD : Load done with ' + filename + ', by ' + client_address)
+
+					confirmed = True
+
+					result = 'Following backup is successfully loaded back : '
+
+					return render(request, 'confirmpass.html', {	
+							'thing' : filename,
+							'confirmed' : confirmed,
+							'result' : result,
+					})
+
+				else:
+
+					confirmed = False
+					action = 'loadback'
+					event = 'load the database backup on '
+					denied_msg = "Wrong password. Please try again."
+
+					return render(request, 'confirmpass.html', {	
+							'action': action,
+							'event' : event,
+							'thing' : filename,
+							'confirmed' : confirmed,
+							'denied_msg' : denied_msg,
+					})
+
 
 
 
@@ -341,9 +441,13 @@ class ResetLabels(View):
 
 	def get(self, request, collname):
 
+		action = 'resetlabels'
+		event = 'reset all labels for'
 
-		return render(request, 'resetlabels.html', {	
-				'collname' : collname,
+		return render(request, 'confirmpass.html', {	
+				'action': action,
+				'event' : event,
+				'thing' : collname,
 		})
 
 
@@ -357,29 +461,39 @@ class ResetLabels(View):
 
 				if(user_pass == reset_pass):
 
+					client_address = get_client_ip(request)
+
+					logging.info('RESET : ' + client_address + ' requested to reset all labels on '   + collname )
+
 					backup_json(collname)
 	
 					model = get_document(collname)
 					
 					model.objects.update(unset__label=1)
 
-					logging.info('Reset All Labels.')
+					logging.info('RESET : Reset done for all labels on ' + collname + ', by ' + client_address)
 
 					confirmed = True
 
-					return render(request, 'resetlabels.html', {	
-							'collname' : collname,
+					result = 'All labels are successfully removed from '
+
+					return render(request, 'confirmpass.html', {	
+							'thing' : collname,
 							'confirmed' : confirmed,
+							'result' : result,
 					})
 
 				else:
 
 					confirmed = False
-
+					action = 'resetlabels'
+					event = 'reset all labels for '
 					denied_msg = "Wrong password. Please try again."
 
-					return render(request, 'resetlabels.html', {	
-							'collname' : collname,
+					return render(request, 'confirmpass.html', {
+							'action': action,	
+							'event' : event,
+							'thing' : collname,
 							'confirmed' : confirmed,
 							'denied_msg' : denied_msg,
 					})
@@ -388,27 +502,63 @@ class ResetLabels(View):
 
 class Labeling(View):
 
-	def get(self, request, collname,  is_labeled):
-				
-		random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 
-		labellist = get_labels(collname)
+	def get(self, request, collname, is_labeled):
 
-		return render(request, 'label.html', {	
-				'random_cluster' : random_cluster,
-				'top10' : top10,
-				'last10' : last10,
-				'labellist' : labellist, 
-				'collname' : collname,
-				'is_labeled': is_labeled,
-				'current_label' : current_label,
-				'warning' : warning,
+		action = 'labeling'
+		event = 'see the clusters for '
+
+		return render(request, 'confirmpass.html', {	
+				'action': action,
+				'event' : event,
+				'thing' : collname,
+				'is_labeled' : is_labeled,
 		})
 
 
 	def post(self, request, collname, is_labeled):
 
-			if "labeling" in request.POST:
+			if "confirmpass" in request.POST:
+
+				user_pass = request.POST['user_pass']
+
+				reset_pass = config.get('dataset', 'reset_pass')
+
+				if(user_pass == reset_pass):
+
+					random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+					labellist = get_labels(collname)
+
+					return render(request, 'label.html', {	
+							'random_cluster' : random_cluster,
+							'top10' : top10,
+							'last10' : last10,
+							'labellist' : labellist, 
+							'collname' : collname,
+							'is_labeled': is_labeled,
+							'current_label' : current_label,
+							'warning' : warning,
+					})
+
+				else:
+
+					confirmed = False
+					action = "labeling"
+					event = 'see the clusters for '
+					denied_msg = "Wrong password. Please try again."
+
+					return render(request, 'confirmpass.html', {	
+							'action': action,
+							'event' : event,
+							'thing' : collname,
+							'confirmed' : confirmed,
+							'denied_msg' : denied_msg,
+							'is_labeled' : is_labeled,
+					})
+
+
+			elif "labeling" in request.POST:
 			
 				#Add the label to DB
 				input_label = request.POST['label']
@@ -437,6 +587,24 @@ class Labeling(View):
 					'is_labeled': is_labeled,
 					'current_label' : current_label,
 					'warning' : warning,
+				})
+
+
+			elif "nextcl" in request.POST:
+
+				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+				labellist = get_labels(collname)
+
+				return render(request, 'label.html', {	
+						'random_cluster' : random_cluster,
+						'top10' : top10,
+						'last10' : last10,
+						'labellist' : labellist, 
+						'collname' : collname,
+						'is_labeled': is_labeled,
+						'current_label' : current_label,
+						'warning' : warning,
 				})
 
 

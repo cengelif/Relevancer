@@ -572,13 +572,13 @@ class Labeling(View):
 
 					model.objects.get(pk=cl_id).update(unset__label = 1)
 
-					logging.info('LABEL: Label deleted from ' + cl_id + ', by ' + client_address)
+					logging.info('LABEL: Label deleted from ' + cl_id + ', by ' + client_address + ' for ' + collname)
 
 				else:
 	
 					model.objects.get(pk=cl_id).update(set__label = str(input_label))
 
-					logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address)
+					logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address + ' for ' + collname)
 				
 				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 
@@ -608,7 +608,7 @@ class Labeling(View):
 
 				model.objects.get(pk=cl_id).update(set__label = str(input_label))
 
-				logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address)
+				logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address + ' for ' + collname)
 				
 				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 

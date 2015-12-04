@@ -15,9 +15,7 @@
 			<ul>
 			{% for filename in filelist %}
 					<li>
-							<a href="/datasets/{{ filename }}/loadback" 
-							onclick="return confirm('This may take a while.')">
-							{{ filename }}</a>
+							<a href="/datasets/{{ filename }}/loadback">{{ filename }}</a>
 					</li>
 			{% endfor %}
 			</ul>

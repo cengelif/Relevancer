@@ -93,8 +93,10 @@
   				
   				<br>
   				
-  				<a href="{% url 'labeling' collname is_labeled %}">
-							<button type="button">Next Cluster</button></a>
+  				<form method="post" name="addlabelform" action="{% url 'labeling' collname is_labeled %}">
+						{% csrf_token %}
+  						<input type="submit" name="nextcl" value="Next Cluster">
+ 	 			</form>
 
   				<br><br>
 	

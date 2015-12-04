@@ -558,7 +558,9 @@ class Labeling(View):
 					})
 
 
-			elif "labeling" in request.POST:
+			elif "label" in request.POST:
+
+				client_address = get_client_ip(request)
 			
 				#Add the label to DB
 				input_label = request.POST['label']
@@ -570,9 +572,13 @@ class Labeling(View):
 
 					model.objects.get(pk=cl_id).update(unset__label = 1)
 
+					logging.info('LABEL: Label deleted from ' + cl_id + ', by ' + client_address)
+
 				else:
 	
 					model.objects.get(pk=cl_id).update(set__label = str(input_label))
+
+					logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address)
 				
 				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
 
@@ -588,6 +594,37 @@ class Labeling(View):
 					'current_label' : current_label,
 					'warning' : warning,
 				})
+
+
+			elif "directlabel" in request.POST:
+
+				client_address = get_client_ip(request)
+
+				#Add the label to DB
+				input_label = request.POST['directlabel']
+				cl_id = request.POST['cl_id']
+
+				model = get_document(collname)
+
+				model.objects.get(pk=cl_id).update(set__label = str(input_label))
+
+				logging.info('LABEL: ' + cl_id + ' labeled as "' + input_label + '", by ' + client_address)
+				
+				random_cluster, top10, last10, current_label, warning = get_randomcluster(collname, is_labeled)
+
+				labellist = get_labels(collname)
+
+				return render(request, 'label.html', {	
+					'random_cluster' : random_cluster,
+					'top10' : top10,
+					'last10' : last10,
+					'labellist' : labellist, 
+					'collname' : collname,
+					'is_labeled': is_labeled,
+					'current_label' : current_label,
+					'warning' : warning,
+				})
+				
 
 
 			elif "nextcl" in request.POST:

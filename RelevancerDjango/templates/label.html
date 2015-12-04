@@ -44,13 +44,20 @@
 				{% if labellist %}
 				
 					<br><br>	
-					The labels used before in this collection (and how many times they are used) :				
+					The labels used before in this collection (and how many times they are used) <br>
+					Click labels to use them again:				<br>	<br>	
 
 					<ul>
 							{% for label in labellist %}
 									<li>
-											<a href="" onclick="document.addlabelform.label.value='{{ label.0 }}';return false;" >
-														<b>{{ label.0 }}</b></a> ({{ label.1 }})	
+											<!--a href="" onclick="document.addlabelform.label.value='{{ label.0 }}';return false;" >
+														<b>{{ label.0 }}</b></a> ({{ label.1 }})	-->
+											<form method="post" name="addlabelform" action="{% url 'labeling' collname is_labeled %}">
+												{% csrf_token %}
+													<input type="text" name="cl_id" value="{{ random_cluster.id }}" placeholder="{{ random_cluster.id }}" style="display: none;" readonly>
+  													<input type="submit" name="directlabel" value="{{ label.0 }}" 
+  															onclick="return confirm('You are about to label this cluster as {{ label.0 }}. This will take action if you confirm this message')"> ({{ label.1 }})	
+ 	 										</form>
 									</li>
 							{% endfor %}
 					</ul>

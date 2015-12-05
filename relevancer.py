@@ -67,7 +67,6 @@ def connect_mongodb(configfile="myconfig.ini", coll_name=None):
 # result_collection = "relevancer_result"
 http_re = re.compile(r'https?[^\s]*')
 usr_re = re.compile(r'@[^\s]*')
-my_token_pattern = r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 no_tok = False  # no_tok by default. 
 #active_column = ""
 
@@ -166,6 +165,10 @@ def strip_tags(html):
 def set_active_column(active_col="active_text"):
 	global active_column
 	active_column = active_col
+
+def set_token_pattern(default_token_pattern= r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
+	global my_token_pattern
+	my_token_pattern = default_token_pattern
 
 
 def read_json_tweets_file(myjsontweetfile, reqlang='en'):
@@ -341,7 +344,7 @@ def normalize_text(mytextDF, create_intermediate_result=False):
 
 	return mytextDF   
 
-def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine', debug=False, similarity_threshold=0.25, debug_threshold=1000):
+def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine', debug=False, similarity_threshold=0.25, debug_threshold=1000, defaultfreqcut_off=2):
 
 	start_time = datetime.datetime.now()
 
@@ -362,7 +365,11 @@ def get_and_eliminate_near_duplicate_tweets(tweetsDF, distancemetric='cosine', d
 	#logging.info("mytext:" + str(active_tweet_df["text"]))
 	logging.info("\n size of mytext:" + str(len(active_tweet_df[active_column])))
 
-	freqcutoff = int(m.log(len(active_tweet_df)))
+	if len(active_tweet_df) > 1000:
+		freqcutoff = int(m.log(len(active_tweet_df)))
+	else:
+		freqcutoff = defaultfreqcut_off # default 2 is applicable for short texts tweets.
+
 	logging.info("Tweet count is:"+str(len(active_tweet_df))+"\tfreqcutoff:"+str(freqcutoff))
 
 	logging.info("In 'word_vectorizer' method, we use 'TfidfVectorizer' to get feature names and parameter is 'active_tweet_df[active_column]' .")
@@ -615,13 +622,17 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 	logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
 	cluster_bigram_cntr = Counter()
 
-	freqcutoff = int(m.log(len(tweetsDF))/2) # the bigger freq threshold is the quicker to find similar groups of tweets, although precision will decrease.
+	freqcutoff = int(m.log(len(tweetsDF))/2)
+	if freqcutoff == 0:
+		freqcutoff = 1 # make it at least 1.
+
+	#freqcutoff = int(m.log(len(tweetsDF))/2) # the bigger freq threshold is the quicker to find similar groups of tweets, although precision will decrease.
 	logging.info("Feature extraction parameters are:\tfrequencyCutoff:"+str(freqcutoff))
 
 	word_vectorizer = TfidfVectorizer(ngram_range=(1, 2), lowercase=False, norm='l2', min_df=freqcutoff, token_pattern=my_token_pattern)
 	text_vectors = word_vectorizer.fit_transform(tweetsDF[active_column])
 	# logging.info("Number of features:"+str(len(word_vectorizer.get_feature_names())))
-	# logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
+	logging.info("Features are:"+str(word_vectorizer.get_feature_names()))
 
 	n_clust = int(m.sqrt(len(tweetsDF))/2)+iteration_no*(min_clusters-len_clust_list) # The more clusters we need, the more clusters we will create.
 	n_initt = int(m.log10(len(tweetsDF)))+iteration_no  # up to 1 million, in KMeans setting, having many iterations is not a problem. # more iterations higher chance of having candidate clusters.

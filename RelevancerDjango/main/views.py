@@ -430,11 +430,12 @@ class LoadBack(View):
 					sbj = "Backup Reload"
 					msg = sbj + '\n\nFile loaded : ' + filename + '\nIP address : ' + client_address + "\n\nThis mail sent to : ebasar"
 
-					send_mail(sbj, msg, "ebasar")
-
 					if HOSTNAME[:9] == "applejack":	 
 						msg = msg + ", hurrial"
 						send_mail(sbj, msg, "hurrial")
+						send_mail(sbj, msg, "ebasar")
+					else:
+						send_mail(sbj, msg, "ebasar")
 
 					confirmed = True
 
@@ -508,6 +509,9 @@ class ResetLabels(View):
 					if HOSTNAME[:9] == "applejack":	 
 						msg = msg + ", hurrial"
 						send_mail(sbj, msg, "hurrial")
+						send_mail(sbj, msg, "ebasar")
+					else:
+						send_mail(sbj, msg, "ebasar")
 
 					confirmed = True
 

@@ -431,9 +431,9 @@ class LoadBack(View):
 					msg = sbj + '\n\nFile loaded : ' + filename + '\nIP address : ' + client_address + "\n\nThis mail sent to : ebasar"
 
 					if HOSTNAME[:9] == "applejack":	 
-						msg = msg + ", hurrial"
-						send_mail(sbj, msg, "hurrial")
-						send_mail(sbj, msg, "ebasar")
+						msg = msg2 + ", hurrial"
+						send_mail(sbj, msg2, "hurrial")
+						send_mail(sbj, msg2, "ebasar")
 					else:
 						send_mail(sbj, msg, "ebasar")
 
@@ -507,9 +507,9 @@ class ResetLabels(View):
 					send_mail(sbj, msg, "ebasar")
 
 					if HOSTNAME[:9] == "applejack":	 
-						msg = msg + ", hurrial"
-						send_mail(sbj, msg, "hurrial")
-						send_mail(sbj, msg, "ebasar")
+						msg2 = msg + ", hurrial"
+						send_mail(sbj, msg2, "hurrial")
+						send_mail(sbj, msg2, "ebasar")
 					else:
 						send_mail(sbj, msg, "ebasar")
 

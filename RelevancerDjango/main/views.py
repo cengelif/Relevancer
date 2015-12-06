@@ -16,6 +16,7 @@ sys.path.append('../') # adds 'Relevancer' folder to PYTHONPATH to find relevanc
 import json
 import time
 import random
+import smtplib # mail
 import logging
 import configparser
 from datetime import datetime
@@ -31,6 +32,8 @@ import pymongo
 #import genocide_data_analysis
 
 
+HOSTNAME = os.uname()[1]
+
 config = configparser.ConfigParser()
 
 config.read("data/auth.ini")
@@ -42,7 +45,22 @@ logging.basicConfig(
 		level=logging.INFO)
 
 
-############################## FUNCTIONS #############################
+def send_mail(sbj, msg, to):
+	#Mail Auth;
+	fromaddr = config.get('mail', 'fromaddr')
+	toaddrs  = config.get('mail', to) # opt : hurrial, ebasar
+	username = config.get('mail', 'user_name') 
+	password = config.get('mail', 'password')
+	subject = sbj
+	message = 'Subject: ' + subject + '\n\n' + msg
+	server = smtplib.SMTP('smtp.gmail.com:587')  
+	server.starttls()  
+	server.login(username,password)  
+	server.sendmail(fromaddr, toaddrs, message)  
+	server.quit() 
+
+
+############################## FUNCTIONS FOR VIEWS ##############################
 
 
 def get_randomcluster(collname, is_labeled): 
@@ -249,7 +267,7 @@ def get_client_ip(request):
 
 
 
-############################## VIEWS #############################
+############################## VIEWS ##############################
 
 
 class Home(View):
@@ -409,6 +427,15 @@ class LoadBack(View):
 
 					logging.info('LOAD : Load done with ' + filename + ', by ' + client_address)
 
+					sbj = "Backup Reload"
+					msg = sbj + '\n\nFile loaded : ' + filename + '\nIP address : ' + client_address + "\n\nThis mail sent to : ebasar"
+
+					send_mail(sbj, msg, "ebasar")
+
+					if HOSTNAME[:9] == "applejack":	 
+						msg = msg + ", hurrial"
+						send_mail(sbj, msg, "hurrial")
+
 					confirmed = True
 
 					result = 'Following backup is successfully loaded back : '
@@ -472,6 +499,15 @@ class ResetLabels(View):
 					model.objects.update(unset__label=1)
 
 					logging.info('RESET : Reset done for all labels on ' + collname + ', by ' + client_address)
+
+					sbj = "Reset All Labels"
+					msg = sbj + '\n\nCollection : ' + collname + '\nIP address : ' + client_address + "\n\nThis mail sent to : ebasar"
+
+					send_mail(sbj, msg, "ebasar")
+
+					if HOSTNAME[:9] == "applejack":	 
+						msg = msg + ", hurrial"
+						send_mail(sbj, msg, "hurrial")
 
 					confirmed = True
 

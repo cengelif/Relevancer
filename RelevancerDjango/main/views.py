@@ -1,10 +1,8 @@
 # Django
 from django.shortcuts import render
 from django.views.generic import View
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
-from django.http import HttpRequest  
-from django.core.urlresolvers import reverse
+
 
 from django.conf import settings
 

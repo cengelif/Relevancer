@@ -27,10 +27,8 @@ SECRET_KEY = config.get('rel_settings', 'secret_key')
 
 if HOSTNAME[:9] == "applejack":		#to work on the server
 	DEBUG = False
-	TEMPLATE_DEBUG = False
 else:								#to work on local
 	DEBUG = True
-	TEMPLATE_DEBUG = False
 
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'relevancer.science.ru.nl']

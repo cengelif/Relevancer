@@ -2,7 +2,8 @@
 from django.shortcuts import render
 from django.views.generic import View
 from django.http import HttpResponseRedirect
-
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 
 from django.conf import settings
 
@@ -260,8 +261,6 @@ def get_client_ip(request):
     if ip is None:
         ip = request.META.get('REMOTE_ADDR')
     return ip
-
-
 
 
 
@@ -749,6 +748,15 @@ class About(View):
 
 		return render(request, 'about.html', {	
 		})
+
+
+
+def handler404(request):
+    response = render_to_response('404.html', {},
+                                  context_instance=RequestContext(request))
+    response.status_code = 404
+    return response
+
 
 
 

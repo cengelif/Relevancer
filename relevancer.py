@@ -27,7 +27,7 @@ root = logging.getLogger()
 if root.handlers:
     for handler in root.handlers:
         root.removeHandler(handler) # remove previous ones. So It will work at module level.
-logging.basicConfig(filename='myapp.log', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%d-%m-%Y, %H:%M', level=logging.INFO)
+logging.basicConfig(filename='myapp2.log', format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%d-%m-%Y, %H:%M', level=logging.INFO)
 logging.info("\nScript started")
 
 def connect_mongodb(configfile="myconfig.ini", coll_name=None):
@@ -68,6 +68,7 @@ def connect_mongodb(configfile="myconfig.ini", coll_name=None):
 http_re = re.compile(r'https?[^\s]*')
 usr_re = re.compile(r'@[^\s]*')
 no_tok = False  # no_tok by default. 
+my_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"
 #active_column = ""
 
 if no_tok:  # create a function for that step!
@@ -166,10 +167,9 @@ def set_active_column(active_col="active_text"):
 	global active_column
 	active_column = active_col
 
-def set_token_pattern(default_token_pattern= r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
+def set_token_pattern(default_token_pattern=r"[#@]?\w+\b|[\U00010000-\U0010ffff]"):
 	global my_token_pattern
 	my_token_pattern = default_token_pattern
-
 
 def read_json_tweets_file(myjsontweetfile, reqlang='en'):
 
@@ -742,6 +742,29 @@ def relax_parameters(min_dist_thres,max_dist_thres,min_max_diff_thres,factor):
 	min_max_diff_thres = min_max_diff_thres + min_max_diff_thres*(factor/4) # There is not much sense in increasing it much. Otherwise it will loose its meaning easily. 
 
 	return min_dist_thres, max_dist_thres, min_max_diff_thres
+
+def eliminate_duplicates_bucketwise(df, step=10000):
+    """
+    The actual near-duplicate detection algorithm is not memory-efficient enough. Therefore,
+    we mostly need to divide the data in the buckets, eliminate duplicates, merge the data, shuffle it, and repeat
+    the same cycle, until no-duplicate detected in any bucket. That may take long for big data sets. Conditions can
+    be relaxed to be quicker but leave a few duplicates.
+    """
+            
+    logging.info("starting eliminate_duplicates_bucketwise, df length:"+str(len(df)))
+    df = df.reindex(np.random.permutation(df.index))
+    df.reset_index(inplace=True, drop=True)
+
+    tmp_df2 = pd.DataFrame()
+    for i in range(0, len(df), step):
+        tmp_unique = get_and_eliminate_near_duplicate_tweets(df[i:i+step], similarity_threshold=0.10, debug=True, debug_threshold=10000)
+        tmp_df2 = pd.concat([tmp_df2, tmp_unique], ignore_index=True)
+
+    if len(df) > len(tmp_df2):
+        logging.info(str(len(df) - len(tmp_df2))+" tweets were eliminated!")
+        return eliminate_duplicates_bucketwise(tmp_df2)
+
+    return df
 
 if __name__ == "__main__":
 	import output

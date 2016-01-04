@@ -19,6 +19,10 @@ _ We can use the Github issue tracker more.
 
 - how can you verify that the feature extraction step take almost all emoticons into account?
 
+- Use Kmeans.transform instead of sp.linalg.norm for calculating distances from the cluster centers.
+  Check: - which is faster? - Example: kmeans_model = MiniBatchKMeans(), kmeans = kmeans_model.fit(vz), kmeans_clusters = kmeans.predict(vz), k
+                                       means_distances = kmeans.transform(vz), Distance: kmeans_distances[i][kmeans_clusters[i]]
+
 
 
 - silhouette score can be provided with an explanation.

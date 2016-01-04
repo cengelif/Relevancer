@@ -594,6 +594,7 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 	"min_max_diff_thres" should not be too small. Then You miss thresholds like: min 0.3 - min 0.7: The top is controlled by the maximum anyway. Do not fear from having it big: around 0.4
 
 	"""
+
 	if min_dist_thres > 0.85 and max_dist_thres>0.99:
 		logging.info("The parameter values are too high to allow a good selection. We just finish searching for clusters at that stage.")
 		logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
@@ -603,6 +604,9 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 	len_clust_list = 0
 	if cluster_list is None:
 		cluster_list = []
+
+	elif not selection and len(cluster_list)>0:
+		return cluster_list
 	else:
 		len_clust_list = len(cluster_list)
 		logging.info("Starting the iteration with:"+str(len_clust_list)+" clusters.")
@@ -617,6 +621,11 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 		logging.info("Tweet set size to be clustered:"+str(len(tweetsDF)))
 		tweetsDF = tweetsDF[~tweetsDF.id_str.isin(clustered_tweet_ids)]
 		logging.info("Tweet set size to be clustered(after elimination of the already clustered tweets):"+str(len(tweetsDF)))
+
+		if len(tweetsDF)==0:
+			logging.info("Please check that the id_str has a unique value for each item.")
+			print("Please check that the id_str has a unique value for each item.")
+			return cluster_list
 
 	logging.info('Creating clusters was started!!')
 	logging.info("Threshold Parameters are: \nmin_dist_thres="+str(min_dist_thres)+"\tmin_max_diff_thres:="+str(min_max_diff_thres)+ "\tmax_dist_thres="+str(max_dist_thres))
@@ -659,7 +668,7 @@ def create_clusters(tweetsDF,  my_token_pattern, min_dist_thres=0.6, min_max_dif
 		similar_indices = (km.labels_ == cn).nonzero()[0]
 		similar = []
 		similar_tuple_list = []
-		for i in similar_indices:
+		for i in similar_indices: 
 			dist = sp.linalg.norm((km.cluster_centers_[cn] - text_vectors[i]))
 			similar_tuple_list.append((dist, tweetsDF['id_str'].values[i], tweetsDF[active_column].values[i], tweetsDF[user_identifier].values[i])) 
 			if strout:

@@ -1,0 +1,103 @@
+{% load staticfiles %}
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+Design by TEMPLATED
+http://templated.co
+Released for free under the Creative Commons Attribution License
+
+Name       : Undeviating 
+Description: A two-column, fixed-width design with dark color scheme.
+Version    : 1.0
+Released   : 20140322
+
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<meta name="keywords" content="relavencer, clustering, classifier" />
+<meta name="description" content="" />
+
+<script src="{% static 'jquery/jquery-1.11.1.min.js' %}"></script>
+
+<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900|Quicksand:400,700|Questrial" rel="stylesheet" />
+
+<link rel="stylesheet" type="text/css" href="{% static 'main.css' %}" />
+
+<title>{% block title %}Home - Relevancer{% endblock %}</title>
+
+
+
+</head>
+<body>
+<div id="header-wrapper">
+
+	<div id="header" class="container">
+	
+		<div id="logo">
+        	<!--span class="icon icon-cog"></span-->
+			<h1><a href="{% url 'home' %}">Relevancer</a></h1>
+		</div>
+		
+			
+		<div id="menu">
+			<ul>
+				{% block menu %}
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howdoesitwork' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+				{% endblock %}
+			</ul>
+		</div>
+		
+	</div>
+	
+</div>
+<div class="wrapper">
+
+	<div id="welcome" class="container">
+    	
+    	{% block main %}
+    	
+    		<div class="title">
+				<h2>Welcome to Relevancer Website !</h2>
+			</div>
+			
+			Sitemap;
+			
+			<ul>
+					<li class="active"><a href="{% url 'home' %}" accesskey="1" title="">Home</a></li>
+					<li><a href="{% url 'howdoesitwork' 'Introduction' %}" accesskey="1" title="">How Does It Work?</a></li>
+					<li><a href="{% url 'datasets' %}" accesskey="2" title="">Datasets</a></li>
+					<li><a href="{% url 'about' %}" accesskey="3" title="">About</a></li>
+			</ul>
+  		  	
+
+	
+		{% endblock %}
+
+	</div>
+	
+</div>
+<div id="copyright">
+
+    		<h3>Relevancer is made possible by:</h3>
+    		
+    		<div id="logocontainer">
+
+				<a href="http://applejack.science.ru.nl/languagemachines/"><img src="{% static 'images/logo-LanguageMachines.png' %}" alt="logo Language Machines"></a>
+
+				<a href="http://www.floodtags.com/"><img src="{% static 'images/logo-floodtags.png' %}" alt="logo FloodTags"></a>
+
+				<a href="http://commit-nl.nl/"><img src="{% static 'images/logo-Commit.png' %}" alt="logo Commit"></a>
+
+				<a href="http://project-infiniti.nl/"><img src="{% static 'images/logo-Infiniti.png' %}" alt="logo Infiniti"></a>
+				
+				<a href="http://www.ru.nl/"><img src="{% static 'images/logo-RU.png' %}" alt="logo Radboud Universiteit"></a>
+
+			</div>
+</div>
+</body>
+</html>

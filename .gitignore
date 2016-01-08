@@ -4,10 +4,17 @@ __pycache__/
 *~
 *.ini
 *.pickle
-<<<<<<< HEAD
+*.pid
+*.json
+data/
+backups/
 
-=======
->>>>>>> ef3b00a8a46fc3727f6480295ebfdef4a4551755
+*.save
+*.save.1
+
+# Virtual Environments
+relenv/
+envrel/
 
 # C extensions
 *.so
